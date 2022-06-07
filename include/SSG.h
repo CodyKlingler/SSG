@@ -48,6 +48,8 @@ class SSG{
 
         Strategy hoffman_karp();
 
+        static SSG random_game_loopless(int n);
+
     private:
         int n_steps;
         int n_steps_terminate; //after this many steps, the game will be won by MIN.

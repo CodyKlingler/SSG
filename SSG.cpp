@@ -8,6 +8,7 @@
 
 //#define SSG_print
 #include <Eigen/Dense>
+#include <Eigen/SparseLU>
 
 const char* vertex_type_names[] = {
     "undefined",
@@ -17,6 +18,28 @@ const char* vertex_type_names[] = {
     "sink_min",
     "sink_max"
 };
+
+//creates SSG without loops
+SSG SSG::random_game_loopless(int n){
+    SSG game(n);
+
+    if(n<2)
+        return game;
+
+    game.set_vertex(n-2, vertex_type::sink_min, n-2, n-2);
+    game.set_vertex(n-1, vertex_type::sink_max, n-1, n-1);
+
+    for(int i = n-3; i>= 0; i--){
+        vertex_type type = (vertex_type)(rand()%3+1);
+        int j = random()%(n - i) + i;
+        int k = random()%(n - i) + i;
+
+        game.set_vertex(i, type, j, k);
+    }
+
+    return game;
+}
+
 
 Strategy SSG::hoffman_karp(){
     Strategy s(n);
@@ -62,38 +85,55 @@ Strategy SSG::hoffman_karp(){
 std::vector<double> SSG::probabilities(Strategy combined_strategy){
     using namespace Eigen;
 
-    MatrixXd mat = MatrixXd::Zero(n,n);
+    //MatrixXd mat = MatrixXd::Zero(n,n);
     VectorXd vec = VectorXd::Zero(n);
+    
+    VectorXd b(n);
+    SparseMatrix<double> mat(n,n);
+    mat.reserve(VectorXi::Constant(n,3));
+    SparseLU<SparseMatrix<double>, COLAMDOrdering<int> >   solver;
+
+
+    
 
     for(std::vector<int>::iterator it = max_vertices.begin(); it != max_vertices.end(); it++){
-        mat(*it,*it) = 1;
+        mat.coeffRef(*it,*it) = 1;
         bool b = combined_strategy[*it];
         int p = outgoing_edge[*it][b];
-        mat(*it,p) = -1;
+        mat.coeffRef(*it,p) = -1;
     }
 
     for(std::vector<int>::iterator it = min_vertices.begin(); it != min_vertices.end(); it++){
-        mat(*it,*it) = 1;
+        mat.coeffRef(*it,*it) = 1;
         bool b = combined_strategy[*it];
         int p = outgoing_edge[*it][b];
-        mat(*it,p) = -1;
+        mat.coeffRef(*it,p) = -1;
     }
 
     for(std::vector<int>::iterator it = ave_vertices.begin(); it != ave_vertices.end(); it++){
-        mat(*it,*it) = 1;
+        mat.coeffRef(*it,*it) = 1;
 
         int p1 = outgoing_edge[*it][0];
         int p2 = outgoing_edge[*it][1];
-        mat(*it,p1) = -.5;
-        mat(*it,p2) = -.5;
+        mat.coeffRef(*it,p1) = -.5;
+        mat.coeffRef(*it,p2) = -.5;
     }
 
-    mat(min_sink_vertex,min_sink_vertex) = 1;
-    mat(max_sink_vertex, max_sink_vertex) = 1;
+    mat.coeffRef(min_sink_vertex,min_sink_vertex) = 1;
+    mat.coeffRef(max_sink_vertex, max_sink_vertex) = 1;
+
+
+        // fill A and b;
+    // Compute the ordering permutation vector from the structural pattern of mat
+    solver.analyzePattern(mat); 
+    // Compute the numerical factorization 
+    solver.factorize(mat); 
+    //Use the factors to solve the linear system 
+    VectorXd x = solver.solve(vec); 
 
     vec(max_sink_vertex) = 1;
-
-    VectorXd x = mat.colPivHouseholderQr().solve(vec);
+    //ColPivHouseholderQR<MatrixXd> intermediate = mat.colPivHouseholderQr();
+    // x = intermediate.solve(vec);
 
     double* probs_temp = x.data();
 

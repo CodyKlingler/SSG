@@ -57,5 +57,16 @@ int main(){
     } cout << endl;
 
 
+    SSG game = SSG::random_game_loopless(10);
+
+    game.print_graph();
+
+    Strategy r_opt = game.hoffman_karp();
+
+    cout << endl << "r_opt:" << endl;
+    for(int i = 0; i<a.n; i++){
+        cout << r_opt[i] << " ";
+    } cout << endl;
+
     return 0;
 }
