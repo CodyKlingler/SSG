@@ -1,7 +1,7 @@
-#pragma once
-
+#pragma once 
 #include <stdlib.h>
 #include <vector>
+
 #include "Strategy.h"
 
 enum vertex_type{
@@ -43,6 +43,11 @@ class SSG{
         int play(int starting_vertex, Strategy combined_strategy);
         double play_n(int starting_vertex, Strategy combined_strategy, int n_trials);
         void print_graph();
+
+        void probabilities(Strategy combined_strategy);
+
+        Strategy hoffman_karp();
+
     private:
         int n_steps;
         int n_steps_terminate; //after this many steps, the game will be won by MIN.

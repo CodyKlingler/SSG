@@ -1,14 +1,19 @@
+#define EIGEN_MPL2_ONLY
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
 #include <string>
 #include <random>
 
-#include "SSG.h"
-#include "Strategy.h"
+#include <Eigen/Dense>
 
+#include "include/Strategy.h" //include Strategy.h before SSG.h
+#include "include/SSG.h"
 
 using namespace std;
+
+using namespace Eigen;
 
 int main(){
     srand(time(NULL));
@@ -25,8 +30,14 @@ int main(){
     a.set_vertex(8, vertex_type::ave, 9, 5); 
     a.set_vertex(9, vertex_type::sink_min, 9, 9);
     a.set_vertex(0, vertex_type::sink_max, 0, 0);
+                //   0 1 2 3 4 5 6 7 8 9
+    bool strat[10] = {0,1,0,1,1,0,0,0,0,0};
+    bool bad_st[10]= {0,0,0,1,0,0,1,0,0,0};
+
+    Strategy s(a.n, strat);
+    Strategy bs(a.n, bad_st);
     
-    a.print_graph();
+    a.probabilities(bs);
 
     return 0;
 }

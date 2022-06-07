@@ -1,4 +1,8 @@
-#include "Strategy.h"
+#include "include/Strategy.h"
+#include "include/SSG.h"
+
+
+#define STRATEGY_print
 
 
 Strategy::Strategy(){
@@ -6,12 +10,25 @@ Strategy::Strategy(){
     strategy=NULL;
 }
 
+
+Strategy::Strategy(int vertices, bool* strat_arr){
+    n = vertices;
+    strategy = strat_arr;
+}
+
 Strategy::Strategy(SSG game){
     int vertices = game.n;
-    strategy = new int[vertices]{0};
+    strategy = new bool[vertices]{0};
 }
 
 
 Strategy::Strategy(int vertices){
-    strategy = new int[vertices]{0};
+    strategy = new bool[vertices]{0};
+}
+
+
+Strategy::~Strategy(){
+    if(strategy){
+        //delete[] strategy;
+    }
 }

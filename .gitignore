@@ -2,3 +2,6 @@ vgcore*
 settings.json
 *.out
 *.o
+*.gch
+.vscode/
+main
