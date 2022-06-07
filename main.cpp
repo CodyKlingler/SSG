@@ -15,6 +15,8 @@ using namespace std;
 
 using namespace Eigen;
 
+
+
 int main(){
     srand(time(NULL));
 
@@ -37,7 +39,23 @@ int main(){
     Strategy s(a.n, strat);
     Strategy bs(a.n, bad_st);
     
-    a.probabilities(bs);
+    vector<double> p = a.probabilities(bs);
+
+    for(double d: p){
+        cout << d << " ";
+    }
+
+    Strategy opt = a.hoffman_karp();
+    
+    cout << endl;
+    for(int i = 0; i<a.n; i++){
+        cout << opt[i] << " ";
+    } cout << endl;
+
+    for(int i = 0; i<a.n; i++){
+        cout << strat[i] << " ";
+    } cout << endl;
+
 
     return 0;
 }

@@ -44,7 +44,7 @@ class SSG{
         double play_n(int starting_vertex, Strategy combined_strategy, int n_trials);
         void print_graph();
 
-        void probabilities(Strategy combined_strategy);
+        std::vector<double> probabilities(Strategy combined_strategy);
 
         Strategy hoffman_karp();
 

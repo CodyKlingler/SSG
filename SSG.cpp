@@ -1,5 +1,8 @@
 #include <iostream>
 #include <random>
+#include <algorithm>
+#include <iterator>
+
 #include "include/Strategy.h"
 #include "include/SSG.h"
 
@@ -16,10 +19,47 @@ const char* vertex_type_names[] = {
 };
 
 Strategy SSG::hoffman_karp(){
-    return Strategy(n);
+    Strategy s(n);
+
+    auto probs = probabilities(s);
+
+    bool vert_switched_current_pass;
+    bool vert_switched_any;
+
+    std::vector<int> player_verts;
+    
+    do{ // while(vert_switched_any);
+        vert_switched_any = false;
+        player_verts = (player_verts == min_vertices)?max_vertices:min_vertices; //switch player vector
+
+        do{ // while(vert_switched_current_pass);
+            vert_switched_current_pass = false;
+            for(int cur_v: player_verts){
+                int cur = outgoing_edge[cur_v][s[cur_v]];
+                int other = outgoing_edge[cur_v][!s[cur_v]];
+
+                if(probs[other] > probs[cur] && player_verts == max_vertices){
+                    vert_switched_current_pass = true;
+                    vert_switched_any = true;
+
+                    s.strategy[cur_v] = !s[cur_v]; //switch edge.
+                    probs = probabilities(s); //update probability vector
+                }
+                else if (probs[other] < probs[cur] && player_verts == min_vertices){
+                    vert_switched_current_pass = true;
+                    vert_switched_any = true;
+
+                    s.strategy[cur_v] = !s[cur_v]; //switch edge.
+                    probs = probabilities(s); //update probability vector
+                }
+            }
+        }while(vert_switched_current_pass);
+    }while(vert_switched_any);
+
+    return s;
 }
 
-void SSG::probabilities(Strategy combined_strategy){
+std::vector<double> SSG::probabilities(Strategy combined_strategy){
     using namespace Eigen;
 
     MatrixXd mat = MatrixXd::Zero(n,n);
@@ -55,7 +95,11 @@ void SSG::probabilities(Strategy combined_strategy){
 
     VectorXd x = mat.colPivHouseholderQr().solve(vec);
 
-    std::cout << "SSG::probabilities = \n" << x << std::endl;
+    double* probs_temp = x.data();
+
+    int vec_size = x.rows();
+ 
+    return std::vector<double>(probs_temp, probs_temp + vec_size);
 }
 
 

@@ -1,6 +1,6 @@
 IDIR =include
 CC=g++
-CFLAGS=-I$(IDIR) -Iinclude* -Wall -std=c++17 # -Wextra 
+CFLAGS=-I$(IDIR) -Iinclude* -Wall -std=c++17 -O0# -Wextra 
 
 ODIR=obj
 
