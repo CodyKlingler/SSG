@@ -16,9 +16,36 @@ using namespace std;
 using namespace Eigen;
  
 
+void printt(vector<bool> s){
+    for(bool b: s){
+        cout << b << " ";
+    }
+}
+
+void printt(vector<bool> s, SSG game){
+    for(int i = 0; i < s.size(); i++){
+        vertex_type t = game.type[i];
+
+        if(t == vertex_type::max || t == vertex_type::min){
+            cout << s[i] << " ";
+        }
+        else{
+            printf(". ");
+        }
+    }
+}
+
+void printt(vector<double> s){
+    for(double d: s){
+        printf("%.2f ", d);
+    }
+}
+
  SSG condon_game(){
     SSG a(10);
 
+
+    a.set_vertex(0, vertex_type::sink_max, 0, 0);
     a.set_vertex(1, vertex_type::max, 2, 5);
     a.set_vertex(2, vertex_type::ave, 1, 3);
     a.set_vertex(3, vertex_type::max, 3, 4);
@@ -28,68 +55,57 @@ using namespace Eigen;
     a.set_vertex(7, vertex_type::ave, 6, 0);
     a.set_vertex(8, vertex_type::ave, 9, 5); 
     a.set_vertex(9, vertex_type::sink_min, 9, 9);
-    a.set_vertex(0, vertex_type::sink_max, 0, 0);
 
     return a;
  }
 
+
+const char* opt_strat_condon = "X 1 X X 1 X 0 X X X";
 std::vector<bool> optimal_condon = {0,1,0,1,1,0,0,0,0,0};
 
 void test_condon_example(){
     SSG game = condon_game();
     auto condon_prob = game.probabilities(optimal_condon);
-
-    vector<vector<bool>> bad_strategies = {{0,0,0,1,0,0,1,0,0,0},
-                                            {0,0,0,0,0,0,0,0,0,0},
-                                            {1,1,1,1,1,1,1,1,1,1},
-                                            {0,1,0,1,0,1,0,1,0,1},
-                                            {1,0,1,0,1,0,1,0,1,0}};
+                                         //"X 1 X x 1 X 0 X X X"        
+    vector<vector<bool>> bad_strategies = {{0,0,0,0,0,0,0,0,0,0},
+                                           {0,0,0,0,0,0,1,0,0,0},
+                                           {0,0,0,0,1,0,0,0,0,0},
+                                           {0,0,0,0,1,0,1,0,0,0},
+                                           {0,0,0,1,0,0,0,0,0,0},
+                                           {0,0,0,1,0,0,1,0,0,0},
+                                           {0,0,0,1,1,0,0,0,0,0},
+                                           {0,0,0,1,1,0,1,0,0,0},
+                                           {0,1,0,0,0,0,0,0,0,0},
+                                           {0,1,0,0,0,0,1,0,0,0},
+                                           {0,1,0,0,1,0,0,0,0,0},
+                                           {0,1,0,0,1,0,1,0,0,0},
+                                           {0,1,0,1,0,0,0,0,0,0},
+                                           {0,1,0,1,0,0,1,0,0,0},
+                                           {0,1,0,1,1,0,0,0,0,0},
+                                           {0,1,0,1,1,0,1,0,0,0}};
 
     vector<vector<bool>> computed_strats(bad_strategies.size());
-    vector<vector<double>> computed_probs(bad_strategies.size());
 
     for(vector<bool>s: bad_strategies){
         vector<bool> hoffman_strat = game.hoffman_karp(s);
         computed_strats.push_back(hoffman_strat);
+    }
 
-        auto hoff_prob = game.probabilities(s);
-        computed_probs.push_back(hoff_prob);
-        
-        for(int i = 0; i<condon_prob.size(); i++){
-            double delta_prob = condon_prob[i] - hoff_prob[i];
-            delta_prob = abs(delta_prob);
-
-            if(delta_prob > .001){
-                cout << "TEST_CONDON_EXAMPLE: computed probability does not match optimal." << endl;
-                printf("\tvertex: %i\t optimal: %f\t test: %f\t\n", i, condon_prob[i], hoff_prob[i]);
-            }
+    for(vector<bool> s: computed_strats){
+        if(s.size()){
+            printt(s); cout << endl;
         }
     }
-
-    for(bool b: optimal_condon){
-        cout << b << " ";
-    }
-    //cout << "<-- optimal" << endl;
+    cout << opt_strat_condon << endl;
+    
     for(vector<bool> s: computed_strats){
-        for(bool b: s){
-            cout << b << " ";
-        } 
-        cout<<endl << flush;
-    }cout << endl;
-
-
-    cout << flush;
-    for(double d: condon_prob){
-        printf("%.2f ", d);
-        fflush(stdout);
+        if(s.size()){
+            printt(game.probabilities(s)); cout << endl;
+        }
     }
-       //cout << "<-- optimal" << endl << flush;
-    for(vector<double> s: computed_probs){
-        for(double d: s){
-            printf("%.2f ", d);
-            fflush(stdout);
-        } cout<<endl << flush;
-    }cout << endl;
+    printt(condon_prob); cout << endl;
+
+    cout << endl;
 
     cout << "test of condon example complete." << endl;
 }
@@ -100,56 +116,54 @@ void test_hoffman_random(int n_tests, int n_vertices){
         SSG game = SSG::random_game_loopless(n_vertices);
 
         const int n_strats_per_game = 10;
-        vector<vector<double>> opts(n_strats_per_game);
         vector<vector<bool>> opts_strat(n_strats_per_game);
 
         for(int k = 0; k<n_strats_per_game; k++){
-            cout << "..";
             auto rand_strat = SSG::random_strategy(game.n);
             vector<bool> r_opt = game.hoffman_karp(rand_strat);
-            vector<double> opt_prob = game.probabilities(r_opt);
-            opts.push_back(opt_prob);
             opts_strat.push_back(r_opt);
         } cout << endl;
 
-        for(int j = 0; j<game.n; j++){
-            cout << ",,";
-            double amax = 1;
-            double amin = -1;
-            for(vector<double> cur_opt: opts){
-                if(j>=cur_opt.size()){
-                    continue;
-                }
-                amax= (cur_opt[j] > amax)? cur_opt[j] : amax;
-                amin = (cur_opt[j] < amin)? cur_opt[j] : amin;
+        for(vector<bool> s: opts_strat){
+            if(s.size()){
+                printt(s, game); cout << endl;
             }
-
-            double delta = amax - amin;
-            delta = abs(delta);
-
-            if(delta > .001){
-                cout << "test_hoffman_random: something is likely wrong. difference in optimal probabilities greater than .001" << endl;
-                cout << delta << endl;
-            }
-        } cout << endl;
+        }cout << endl;
 
         for(vector<bool> s: opts_strat){
-            for(bool b: s){
-                cout << b << " ";
+            if(s.size()){
+                auto p = game.probabilities(s);
+                printt(p); cout << endl;
             }
-            cout << endl;
         }cout << endl;
 
     }
     cout << "test_hoffman_random complete. "<< endl;
 }
 
+
+
 int main(){
     srand(time(NULL));
 
-    test_condon_example();
+    //test_condon_example();  return 0;
 
-    //test_hoffman_random(5, 15);
+    test_hoffman_random(5, 15); return 0;
+
+    SSG game = condon_game();
+
+    vector<bool> s(10, 1);
+
+    auto new_s = game.hoffman_karp(s);
+
+    printt(new_s); cout << endl;
+
+    auto d = game.probabilities(new_s);
+
+    printt(d); 
+    
+    
+    cout << endl;
 
     return 0;
 }

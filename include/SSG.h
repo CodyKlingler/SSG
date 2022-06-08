@@ -47,7 +47,7 @@ class SSG{
 
         std::vector<double> probabilities(std::vector<bool>strategy);
 
-        std::vector<bool> hoffman_karp(std::vector<bool> &s);
+        std::vector<bool> hoffman_karp(std::vector<bool> s);
         std::vector<bool> hoffman_karp();
 
         static SSG random_game_loopless(int n);

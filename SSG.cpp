@@ -54,11 +54,10 @@ std::vector<bool> SSG::hoffman_karp(){
     return hoffman_karp(s);
 }
 
-std::vector<bool> SSG::hoffman_karp(std::vector<bool> &s){
+std::vector<bool> SSG::hoffman_karp(std::vector<bool> s){
 
     auto probs = probabilities(s);
 
-    bool vert_switched_current_pass;
     bool vert_switched_any;
 
     std::vector<int> player_verts;
@@ -66,42 +65,43 @@ std::vector<bool> SSG::hoffman_karp(std::vector<bool> &s){
     do{ // while(vert_switched_any);
         vert_switched_any = false;
         player_verts = (player_verts == min_vertices)?max_vertices:min_vertices; //switch player vector
-
-        do{ // while(vert_switched_current_pass);
-            vert_switched_current_pass = false;
+        std::vector<std::vector<int>> player_verts_vec = {min_vertices, max_vertices};
+        for(auto player_verts: player_verts_vec){
             for(int cur_v: player_verts){
-                int cur = outgoing_edge[cur_v][s[cur_v]];
-                int other = outgoing_edge[cur_v][!s[cur_v]];
+                int cur_edge = outgoing_edge[cur_v][s[cur_v]];
+                int other_edge = outgoing_edge[cur_v][!s[cur_v]];
 
-                double delta = probs[other] - probs[cur];
-                std::cout << probs[other] << "  " <<  probs[cur] << std::endl;
+                //
+                s[cur_v] = !s[cur_v];
+                auto alternate_prob = probabilities(s);
+                s[cur_v] = !s[cur_v];
+
+                double p_cur = probs[cur_v];
+                double p_other = alternate_prob[cur_v];
+
+                double delta = p_other - p_cur;
                 delta = abs(delta);
+                    /*
+                printf("cur_v: %i\t ",cur_v);
+                printf(vertex_type_names[type[cur_v]]);
+                printf("\t cur_p: %f\t other_p: %f delta: %f\n", p_cur, p_other, delta);
+                    */
                 if(delta > .001){
 
-                    if(probs[other] > probs[cur] && player_verts == max_vertices){
-                        vert_switched_current_pass = true;
+                    if(p_other > p_cur && player_verts == max_vertices){
                         vert_switched_any = true;
-                                                                    std::cout << "  a\n";
                         s[cur_v] = !s[cur_v]; //switch edge.
-                        probs = probabilities(s); //update probability vector
+                        probs = alternate_prob; //update probability vector
                     }
-                    else if (probs[other] < probs[cur] && player_verts == min_vertices){
-                        vert_switched_current_pass = true;
+                    else if (p_other < p_cur && player_verts == min_vertices){
                         vert_switched_any = true;
-                                                                    std::cout<<"b\n";
                         s[cur_v] = !s[cur_v]; //switch edge.
-                        probs = probabilities(s); //update probability vector
+                        probs = alternate_prob; //update probability vector
                     }
                 }
             }
-        }while(vert_switched_current_pass);
+        }
     }while(vert_switched_any);
-
-    std::cout << "Hoff_karp output: "<< std::endl;
-    for(bool b: s){
-        std::cout << b << " ";
-    } std::cout << std::endl;
-
     return s;
 }
 
@@ -143,6 +143,8 @@ std::vector<double> SSG::probabilities(std::vector<bool> combined_strategy){
         coeffs.push_back(Triplet<double>(*it,p2,-.5));
     }
 
+    
+
     //mat.coeffRef(min_sink_vertex,min_sink_vertex) = 1;
     //mat.coeffRef(max_sink_vertex, max_sink_vertex) = 1;
 
@@ -155,6 +157,8 @@ std::vector<double> SSG::probabilities(std::vector<bool> combined_strategy){
     //mat.reserve(MatrixXi::Constant(n,3));
     mat.setFromTriplets(coeffs.begin(), coeffs.end());  // fill A and b;
     BiCGSTAB<SparseMatrix<double> > solver;
+    mat.makeCompressed();
+    
     solver.compute(mat);
 
     VectorXd vec = VectorXd::Zero(n);
