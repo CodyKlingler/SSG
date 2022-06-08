@@ -1,5 +1,6 @@
 #pragma once
 
+/*
 class SSG;
 
 class Strategy{
@@ -19,3 +20,4 @@ class Strategy{
 
         ~Strategy();
 };
+*/

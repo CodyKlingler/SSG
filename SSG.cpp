@@ -8,7 +8,7 @@
 
 //#define SSG_print
 #include <Eigen/Dense>
-#include <Eigen/SparseLU>
+#include <Eigen/Sparse>
 
 const char* vertex_type_names[] = {
     "undefined",
@@ -40,9 +40,21 @@ SSG SSG::random_game_loopless(int n){
     return game;
 }
 
+std::vector<bool> SSG::random_strategy(int n){
+    std::vector<bool> s(n,0);
 
-Strategy SSG::hoffman_karp(){
-    Strategy s(n);
+    for(int i = 0; i<s.size(); i++){
+        s[i] = random()%2;
+    }
+    return s;
+}
+
+std::vector<bool> SSG::hoffman_karp(){
+    std::vector<bool> s(n,0);
+    return hoffman_karp(s);
+}
+
+std::vector<bool> SSG::hoffman_karp(std::vector<bool> &s){
 
     auto probs = probabilities(s);
 
@@ -61,79 +73,97 @@ Strategy SSG::hoffman_karp(){
                 int cur = outgoing_edge[cur_v][s[cur_v]];
                 int other = outgoing_edge[cur_v][!s[cur_v]];
 
-                if(probs[other] > probs[cur] && player_verts == max_vertices){
-                    vert_switched_current_pass = true;
-                    vert_switched_any = true;
+                double delta = probs[other] - probs[cur];
+                std::cout << probs[other] << "  " <<  probs[cur] << std::endl;
+                delta = abs(delta);
+                if(delta > .001){
 
-                    s.strategy[cur_v] = !s[cur_v]; //switch edge.
-                    probs = probabilities(s); //update probability vector
-                }
-                else if (probs[other] < probs[cur] && player_verts == min_vertices){
-                    vert_switched_current_pass = true;
-                    vert_switched_any = true;
-
-                    s.strategy[cur_v] = !s[cur_v]; //switch edge.
-                    probs = probabilities(s); //update probability vector
+                    if(probs[other] > probs[cur] && player_verts == max_vertices){
+                        vert_switched_current_pass = true;
+                        vert_switched_any = true;
+                                                                    std::cout << "  a\n";
+                        s[cur_v] = !s[cur_v]; //switch edge.
+                        probs = probabilities(s); //update probability vector
+                    }
+                    else if (probs[other] < probs[cur] && player_verts == min_vertices){
+                        vert_switched_current_pass = true;
+                        vert_switched_any = true;
+                                                                    std::cout<<"b\n";
+                        s[cur_v] = !s[cur_v]; //switch edge.
+                        probs = probabilities(s); //update probability vector
+                    }
                 }
             }
         }while(vert_switched_current_pass);
     }while(vert_switched_any);
 
+    std::cout << "Hoff_karp output: "<< std::endl;
+    for(bool b: s){
+        std::cout << b << " ";
+    } std::cout << std::endl;
+
     return s;
 }
 
-std::vector<double> SSG::probabilities(Strategy combined_strategy){
+std::vector<double> SSG::probabilities(std::vector<bool> combined_strategy){
     using namespace Eigen;
 
-    //MatrixXd mat = MatrixXd::Zero(n,n);
-    VectorXd vec = VectorXd::Zero(n);
-    
-    VectorXd b(n);
-    SparseMatrix<double> mat(n,n);
-    mat.reserve(VectorXi::Constant(n,3));
-    SparseLU<SparseMatrix<double>, COLAMDOrdering<int> >   solver;
-
-
-    
+    std::vector<Triplet<double>> coeffs(n*3);
 
     for(std::vector<int>::iterator it = max_vertices.begin(); it != max_vertices.end(); it++){
-        mat.coeffRef(*it,*it) = 1;
+        //mat.coeffRef(*it,*it) = 1;
         bool b = combined_strategy[*it];
         int p = outgoing_edge[*it][b];
-        mat.coeffRef(*it,p) = -1;
+        //mat.coeffRef(*it,p) = -1;
+
+        coeffs.push_back(Triplet<double>(*it,*it,1));
+        coeffs.push_back(Triplet<double>(*it,p,-1));
     }
 
     for(std::vector<int>::iterator it = min_vertices.begin(); it != min_vertices.end(); it++){
-        mat.coeffRef(*it,*it) = 1;
+        //mat.coeffRef(*it,*it) = 1;
         bool b = combined_strategy[*it];
         int p = outgoing_edge[*it][b];
-        mat.coeffRef(*it,p) = -1;
+        //mat.coeffRef(*it,p) = -1;
+
+        coeffs.push_back(Triplet<double>(*it,*it,1));
+        coeffs.push_back(Triplet<double>(*it,p,-1));
     }
 
     for(std::vector<int>::iterator it = ave_vertices.begin(); it != ave_vertices.end(); it++){
-        mat.coeffRef(*it,*it) = 1;
+        //mat.coeffRef(*it,*it) = 1;
 
         int p1 = outgoing_edge[*it][0];
         int p2 = outgoing_edge[*it][1];
-        mat.coeffRef(*it,p1) = -.5;
-        mat.coeffRef(*it,p2) = -.5;
+        //mat.coeffRef(*it,p1) = -.5;
+        //mat.coeffRef(*it,p2) = -.5;
+
+        coeffs.push_back(Triplet<double>(*it,*it,1));
+        coeffs.push_back(Triplet<double>(*it,p1,-.5));
+        coeffs.push_back(Triplet<double>(*it,p2,-.5));
     }
 
-    mat.coeffRef(min_sink_vertex,min_sink_vertex) = 1;
-    mat.coeffRef(max_sink_vertex, max_sink_vertex) = 1;
+    //mat.coeffRef(min_sink_vertex,min_sink_vertex) = 1;
+    //mat.coeffRef(max_sink_vertex, max_sink_vertex) = 1;
 
 
-        // fill A and b;
-    // Compute the ordering permutation vector from the structural pattern of mat
-    solver.analyzePattern(mat); 
-    // Compute the numerical factorization 
-    solver.factorize(mat); 
+    coeffs.push_back(Triplet<double>(max_sink_vertex,max_sink_vertex,1));
+
+    coeffs.push_back(Triplet<double>(min_sink_vertex,min_sink_vertex,1));
+    
+    SparseMatrix<double> mat(n,n); 
+    //mat.reserve(MatrixXi::Constant(n,3));
+    mat.setFromTriplets(coeffs.begin(), coeffs.end());  // fill A and b;
+    BiCGSTAB<SparseMatrix<double> > solver;
+    solver.compute(mat);
+
+    VectorXd vec = VectorXd::Zero(n);
+    vec(max_sink_vertex) = 1;
+
     //Use the factors to solve the linear system 
     VectorXd x = solver.solve(vec); 
 
-    vec(max_sink_vertex) = 1;
-    //ColPivHouseholderQR<MatrixXd> intermediate = mat.colPivHouseholderQr();
-    // x = intermediate.solve(vec);
+    //std::cout << "linear system solver:   estimated error: " << solver.error() << std::endl;
 
     double* probs_temp = x.data();
 
@@ -162,7 +192,7 @@ SSG::SSG(int vertices){
     min_sink_vertex = -1;
     max_sink_vertex = -1;
 
-    Strategy strat;
+    std::vector<bool> strat;
     token = -1;
 
     n_steps_terminate = 1000*n;
@@ -239,7 +269,7 @@ void SSG::set_vertex(int vertex, vertex_type type, int e1, int e2){
 }
 
 
-void SSG::start(int starting_vertex, Strategy combined_strategy){
+void SSG::start(int starting_vertex, std::vector<bool> combined_strategy){
     token = starting_vertex;
     strat = combined_strategy;
     n_steps = 0;
@@ -317,12 +347,12 @@ int SSG::step(int steps_to_take){
     return -1;
 }
 
-int SSG::play(int starting_vertex, Strategy combined_strategy){
+int SSG::play(int starting_vertex, std::vector<bool> combined_strategy){
     start(starting_vertex, combined_strategy);
     return step(n_steps_terminate);
 }
 
-double SSG::play_n(int starting_vertex, Strategy combined_strategy, int n_trials){
+double SSG::play_n(int starting_vertex, std::vector<bool> combined_strategy, int n_trials){
 
     long max_wins = 0;
 

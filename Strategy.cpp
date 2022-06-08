@@ -1,3 +1,5 @@
+
+/*
 #include "include/Strategy.h"
 #include "include/SSG.h"
 
@@ -32,3 +34,4 @@ Strategy::~Strategy(){
         //delete[] strategy;
     }
 }
+*/

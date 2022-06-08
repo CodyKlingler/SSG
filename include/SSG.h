@@ -1,4 +1,5 @@
 #pragma once 
+
 #include <stdlib.h>
 #include <vector>
 
@@ -31,24 +32,26 @@ class SSG{
         int max_sink_vertex = -1;
 
         int token;
-        Strategy strat;
+        std::vector<bool> strat;
 
    
         SSG(int n_vertices);
         void set_vertex(int vertex, vertex_type type, int e1, int e2);
         void set_vertex_type(int vertex, vertex_type type);
         void set_edges(int vertex, int e1, int e2);
-        void start(int starting_vertex, Strategy combined_strategy);
+        void start(int starting_vertex, std::vector<bool> strategy);
         int step(int n_steps = 1);
-        int play(int starting_vertex, Strategy combined_strategy);
-        double play_n(int starting_vertex, Strategy combined_strategy, int n_trials);
+        int play(int starting_vertex, std::vector<bool> strategy);
+        double play_n(int starting_vertex, std::vector<bool> strategy, int n_trials);
         void print_graph();
 
-        std::vector<double> probabilities(Strategy combined_strategy);
+        std::vector<double> probabilities(std::vector<bool>strategy);
 
-        Strategy hoffman_karp();
+        std::vector<bool> hoffman_karp(std::vector<bool> &s);
+        std::vector<bool> hoffman_karp();
 
         static SSG random_game_loopless(int n);
+        static std::vector<bool> random_strategy(int n);
 
     private:
         int n_steps;
