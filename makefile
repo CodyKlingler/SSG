@@ -1,15 +1,15 @@
 IDIR =include
 CC=g++
-CFLAGS=-I$(IDIR) -Iinclude* -Wall -std=c++17# -Wextra 
+CFLAGS=-I$(IDIR) -Iinclude* -Wall -std=c++17 -O3# -Wextra 
 
 ODIR=obj
 
 LIBS=-lm
 
-_DEPS = SSG.h Strategy.h
+_DEPS = SSG.h Strategy.h SSG_tests.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ = main.o SSG.o Strategy.o
+_OBJ = main.o SSG.o Strategy.o SSG_tests.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 

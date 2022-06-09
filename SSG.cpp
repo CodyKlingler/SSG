@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <iterator>
 
+#include <fstream>
+
 #include "include/Strategy.h"
 #include "include/SSG.h"
 
@@ -43,7 +45,7 @@ SSG SSG::random_game_loopless(int n){
 std::vector<bool> SSG::random_strategy(int n){
     std::vector<bool> s(n,0);
 
-    for(int i = 0; i<s.size(); i++){
+    for(unsigned int i = 0; i<s.size(); i++){
         s[i] = random()%2;
     }
     return s;
@@ -54,8 +56,21 @@ std::vector<bool> SSG::hoffman_karp(){
     return hoffman_karp(s);
 }
 
-std::vector<bool> SSG::hoffman_karp(std::vector<bool> s){
+//checks if u's prob depends on v's
+bool SSG::probability_depends_on(int u, int v){
+    return false;
+}
 
+
+int xxx = 0;
+const int nnn = 1000000;
+
+bool print_prob = false;
+
+bool exported_b4 = false;
+
+std::vector<bool> SSG::hoffman_karp(std::vector<bool> s){
+    
     auto probs = probabilities(s);
 
     bool vert_switched_any;
@@ -64,14 +79,18 @@ std::vector<bool> SSG::hoffman_karp(std::vector<bool> s){
     
     do{ // while(vert_switched_any);
         vert_switched_any = false;
+        if(xxx > nnn) 
+            std::cout << "&&" << std::endl;
         player_verts = (player_verts == min_vertices)?max_vertices:min_vertices; //switch player vector
         std::vector<std::vector<int>> player_verts_vec = {min_vertices, max_vertices};
-        for(auto player_verts: player_verts_vec){
-            for(int cur_v: player_verts){
+        for(auto player_verts: player_verts_vec){ 
+            if(xxx > nnn) 
+                std::cout << "||" << std::endl;
+            for(auto it = player_verts.begin(); it!= player_verts.end(); it++){
+                int cur_v = *it;
                 int cur_edge = outgoing_edge[cur_v][s[cur_v]];
                 int other_edge = outgoing_edge[cur_v][!s[cur_v]];
-
-                //
+                
                 s[cur_v] = !s[cur_v];
                 auto alternate_prob = probabilities(s);
                 s[cur_v] = !s[cur_v];
@@ -79,31 +98,77 @@ std::vector<bool> SSG::hoffman_karp(std::vector<bool> s){
                 double p_cur = probs[cur_v];
                 double p_other = alternate_prob[cur_v];
 
+                /*
+                if(p_cur > 1.05){
+                    std::cout << "probs: " << probs << std::endl;
+                    print_prob = true;
+                    probabilities(s);
+                    print_prob = false;
+                }
+
+                if(p_other > 1.05){
+                    std::cout << "other probs: " << alternate_prob << std::endl;
+                    print_prob = true;
+                    s[cur_v] = !s[cur_v];
+                    auto alternate_prob = probabilities(s);
+                    s[cur_v] = !s[cur_v];
+                    print_prob = false;
+                }
+                */
+
+
                 double delta = p_other - p_cur;
                 delta = abs(delta);
-                    /*
-                printf("cur_v: %i\t ",cur_v);
-                printf(vertex_type_names[type[cur_v]]);
-                printf("\t cur_p: %f\t other_p: %f delta: %f\n", p_cur, p_other, delta);
-                    */
+                if(xxx++ > nnn){
+
+                    if(!exported_b4){
+                        exported_b4 = true;
+
+                        std::ofstream myfile;
+                        myfile.open("this.txt");
+
+                        myfile << *this;
+                        myfile.close();
+                    }
+
+                    printf("cur_v: %i\t ",cur_v);
+                    printf(vertex_type_names[type[cur_v]]);
+                    printf("\t cur_p(%i): %f\t other_p(%i): %f delta: %f\n", cur_edge, p_cur, other_edge, p_other, delta);
+                    std::cout << "cur prob arr: " << probs << std::endl;
+                    std::cout << "alt prob arr: " << alternate_prob << std::endl;
+                    std::cout << "strategy" << s << std::endl;
+                }
+                    
                 if(delta > .001){
 
                     if(p_other > p_cur && player_verts == max_vertices){
                         vert_switched_any = true;
                         s[cur_v] = !s[cur_v]; //switch edge.
                         probs = alternate_prob; //update probability vector
+                        it = player_verts.begin();
+                        if(xxx++ > nnn){
+                            std::cout << "swap max" << std::endl;
+                        }
                     }
                     else if (p_other < p_cur && player_verts == min_vertices){
                         vert_switched_any = true;
                         s[cur_v] = !s[cur_v]; //switch edge.
                         probs = alternate_prob; //update probability vector
+                        it = player_verts.begin();
+                        if(xxx++ > nnn)
+                            std::cout << "swap min" << std::endl;
                     }
                 }
             }
         }
     }while(vert_switched_any);
+    if(xxx++ > nnn)
+        std::cout << "EXIT" << std::endl;
     return s;
 }
+
+
+
 
 std::vector<double> SSG::probabilities(std::vector<bool> combined_strategy){
     using namespace Eigen;
@@ -149,6 +214,7 @@ std::vector<double> SSG::probabilities(std::vector<bool> combined_strategy){
     //mat.coeffRef(max_sink_vertex, max_sink_vertex) = 1;
 
 
+
     coeffs.push_back(Triplet<double>(max_sink_vertex,max_sink_vertex,1));
 
     coeffs.push_back(Triplet<double>(min_sink_vertex,min_sink_vertex,1));
@@ -156,8 +222,12 @@ std::vector<double> SSG::probabilities(std::vector<bool> combined_strategy){
     SparseMatrix<double> mat(n,n); 
     //mat.reserve(MatrixXi::Constant(n,3));
     mat.setFromTriplets(coeffs.begin(), coeffs.end());  // fill A and b;
-    BiCGSTAB<SparseMatrix<double> > solver;
+    //BiCGSTAB<SparseMatrix<double> > solver;
+
+    LeastSquaresConjugateGradient<SparseMatrix<double> > solver;
     mat.makeCompressed();
+
+    
     
     solver.compute(mat);
 
@@ -165,16 +235,20 @@ std::vector<double> SSG::probabilities(std::vector<bool> combined_strategy){
     vec(max_sink_vertex) = 1;
 
     //Use the factors to solve the linear system 
-    VectorXd x = solver.solve(vec); 
+    VectorXd x = solver.solve(vec).cwiseAbs(); 
 
-    //std::cout << "linear system solver:   estimated error: " << solver.error() << std::endl;
-
+    if(1 || print_prob){
+        std::cout << mat << std::endl;
+        std::cout << "linear system solver:   estimated error: " << solver.error() << std::endl;
+    }
+    
     double* probs_temp = x.data();
 
     int vec_size = x.rows();
  
     return std::vector<double>(probs_temp, probs_temp + vec_size);
 }
+
 
 
 SSG::SSG(int vertices){
@@ -407,4 +481,62 @@ void SSG::print_graph(){
         printf(vertex_type_names[cur_type]);
         printf(" (%i) : %i %i\n", i, outgoing_edge[i][0], outgoing_edge[i][1]);
     }
+}
+
+
+std::ostream& operator<<(std::ostream& os, const SSG &game)
+{
+    os << game.n << std::endl;
+    for(int i = 0; i<game.n; i++){
+        os << i << "\t" << game.type[i] << "\t" << game.outgoing_edge[i][0] << "\t" <<game.outgoing_edge[i][1] << std::endl;
+    }
+    return os;
+}
+
+
+SSG SSG::read_game_file(std::ifstream &file){
+    std::string cur_line;
+
+    std::getline(file, cur_line);
+
+    int n = stoi(cur_line);
+    SSG game(n);
+
+    for(int i = 0; i<n; i++){
+        std::getline(file, cur_line);
+
+        int v, type, e1, e2;
+        std::istringstream iss(cur_line);
+        iss >> v >> type >> e1 >> e2;
+        game.set_vertex(v,(vertex_type)type,e1,e2);
+    }
+    return game;
+}
+
+
+std::vector<bool> SSG::read_strategy_file(std::ifstream &file){
+    std::vector<bool> vec;
+    std::string cur_line;
+
+    while(std::getline(file, cur_line, ' ')){
+        int n = stoi(cur_line);
+        bool b = (bool)n;
+        vec.push_back(b);
+    }
+    return vec;
+}
+
+// << operator for strategies
+std::ostream& operator<<(std::ostream& os, const std::vector<bool> &vec){
+    for(auto it = vec.begin(); it!=vec.end(); it++){
+        os << *it << " ";
+    }
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const std::vector<double> &vec){
+    for(auto it = vec.begin(); it!=vec.end(); it++){
+        os << *it << " ";
+    }
+    return os;
 }

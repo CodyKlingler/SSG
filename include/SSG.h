@@ -2,6 +2,8 @@
 
 #include <stdlib.h>
 #include <vector>
+#include <fstream>
+#include <iostream>
 
 #include "Strategy.h"
 
@@ -51,9 +53,20 @@ class SSG{
         std::vector<bool> hoffman_karp();
 
         static SSG random_game_loopless(int n);
+        static SSG read_game_file(std::ifstream &file);
         static std::vector<bool> random_strategy(int n);
+        static std::vector<bool> read_strategy_file(std::ifstream &file);
+
+        friend std::ostream& operator<<(std::ostream& stream, const SSG& game);
 
     private:
         int n_steps;
         int n_steps_terminate; //after this many steps, the game will be won by MIN.
+        bool probability_depends_on(int u, int v);
 };
+
+// << operator for strategies
+std::ostream& operator<<(std::ostream& os, const std::vector<bool> &vec);
+
+// << operator for strategies
+std::ostream& operator<<(std::ostream& os, const std::vector<double> &vec);
