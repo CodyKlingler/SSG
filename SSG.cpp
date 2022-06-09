@@ -63,7 +63,7 @@ bool SSG::probability_depends_on(int u, int v){
 
 
 int xxx = 0;
-const int nnn = 1000000;
+const int nnn = 10000000;
 
 bool print_prob = false;
 
@@ -182,7 +182,9 @@ std::vector<double> SSG::probabilities(std::vector<bool> combined_strategy){
         //mat.coeffRef(*it,p) = -1;
 
         coeffs.push_back(Triplet<double>(*it,*it,1));
-        coeffs.push_back(Triplet<double>(*it,p,-1));
+        if(*it != p){
+            coeffs.push_back(Triplet<double>(*it,p,-1));
+        }
     }
 
     for(std::vector<int>::iterator it = min_vertices.begin(); it != min_vertices.end(); it++){
@@ -192,7 +194,9 @@ std::vector<double> SSG::probabilities(std::vector<bool> combined_strategy){
         //mat.coeffRef(*it,p) = -1;
 
         coeffs.push_back(Triplet<double>(*it,*it,1));
-        coeffs.push_back(Triplet<double>(*it,p,-1));
+        if(*it != p){
+            coeffs.push_back(Triplet<double>(*it,p,-1));
+        }
     }
 
     for(std::vector<int>::iterator it = ave_vertices.begin(); it != ave_vertices.end(); it++){
@@ -204,8 +208,13 @@ std::vector<double> SSG::probabilities(std::vector<bool> combined_strategy){
         //mat.coeffRef(*it,p2) = -.5;
 
         coeffs.push_back(Triplet<double>(*it,*it,1));
-        coeffs.push_back(Triplet<double>(*it,p1,-.5));
-        coeffs.push_back(Triplet<double>(*it,p2,-.5));
+        if(*it != p1){
+            coeffs.push_back(Triplet<double>(*it,p1,-.5));
+        }
+        if(*it != p2 && p2 != p1){
+            coeffs.push_back(Triplet<double>(*it,p2,-.5));
+        }
+        
     }
 
     
@@ -237,7 +246,7 @@ std::vector<double> SSG::probabilities(std::vector<bool> combined_strategy){
     //Use the factors to solve the linear system 
     VectorXd x = solver.solve(vec).cwiseAbs(); 
 
-    if(1 || print_prob){
+    if(0 && print_prob){
         std::cout << mat << std::endl;
         std::cout << "linear system solver:   estimated error: " << solver.error() << std::endl;
     }

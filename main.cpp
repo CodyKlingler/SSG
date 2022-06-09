@@ -52,6 +52,8 @@ int main(){
 
     //test_hoffman_random(5, 100); return 0;
 
+
+    /*
     ifstream myfile;
     myfile.open("this.txt");
 
@@ -64,11 +66,20 @@ int main(){
     cout << r;
 
     return 0;
+    */
 
 
-    for(int i = 5; i<200; i++){
+
+   //TODO.. clean up debugging nonsense and make some benchmarking functions.
+   //debugging stuff in hoffman() and probabilities()
+    // -O3 optimization is on btw.
+    // can speed hoffman up a lot by not iterating back through the vertices n^2 times
+    
+
+
+    for(int i = 5; i<10000; i++){
         auto start = std::chrono::system_clock::now();
-        test_hoffman_random(100,5);
+        test_hoffman_random(3,i);
         auto end = std::chrono::system_clock::now();
         std::chrono::duration<double> elapsed_seconds = end - start;
         cout << i << "\t" << elapsed_seconds.count() << endl;
