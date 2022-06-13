@@ -22,10 +22,10 @@ enum vertex_type{
 class SSG{
     public:
         int n;
-        vertex_type* type;
+        std::vector<vertex_type> type;
 
-        int** outgoing_edge;
-        std::vector<int>* incoming_edges;
+        std::vector<std::vector<int>> outgoing_edge;
+        std::vector<std::vector<int>> incoming_edges;
 
         std::vector<int> min_vertices;
         std::vector<int> max_vertices;
@@ -49,8 +49,14 @@ class SSG{
 
         std::vector<double> probabilities(std::vector<bool>strategy);
 
+        std::vector<bool> incorrect_hoffman_karp(std::vector<bool> s);
+        std::vector<bool> incorrect_hoffman_karp();
+
+        std::vector<bool> tripathi_hoffman_karp(std::vector<bool> s);
+        std::vector<bool> tripathi_hoffman_karp();
+
         std::vector<bool> hoffman_karp(std::vector<bool> s);
-        std::vector<bool> hoffman_karp();
+        std::vector<bool> modified_pollatschek(std::vector<bool> s);
 
         static SSG random_game_loopless(int n);
         static SSG read_game_file(std::ifstream &file);

@@ -1,3 +1,5 @@
+#include <chrono>
+
 #include "include/SSG_tests.h"
 
 
@@ -76,7 +78,7 @@ void test_condon_example(){
     std::vector<std::vector<bool>> computed_strats(bad_strategies.size());
 
     for(std::vector<bool>s: bad_strategies){
-        std::vector<bool> hoffman_strat = game.hoffman_karp(s);
+        std::vector<bool> hoffman_strat = game.incorrect_hoffman_karp(s);
         computed_strats.push_back(hoffman_strat);
     }
 
@@ -102,21 +104,19 @@ void test_condon_example(){
     #endif
 }
 
-void test_hoffman_random(int n_tests, int n_vertices){
+void test_hoffman(int n_tests, int n_strats_per_game, int n_vertices){
     for(int i = 0; i<n_tests; i++){
         #ifdef SSG_TEST_PRINT
             std::cout << "testing random game: " << i+1 << "/" << n_tests << std::endl;
         #endif
         SSG game = SSG::random_game_loopless(n_vertices);
 
-        const int n_strats_per_game = 10;
-
         std::vector<std::vector<bool>> rand_strats(n_strats_per_game);
         std::vector<std::vector<bool>> opts_strat(n_strats_per_game);
 
         for(int k = 0; k<n_strats_per_game; k++){
             auto rand_strat = SSG::random_strategy(game.n);
-            std::vector<bool> r_opt = game.hoffman_karp(rand_strat);
+            std::vector<bool> r_opt = game.incorrect_hoffman_karp(rand_strat);
             rand_strats.push_back(rand_strat);
             opts_strat.push_back(r_opt);
         } 
@@ -141,9 +141,78 @@ void test_hoffman_random(int n_tests, int n_vertices){
         #endif
     }
     #ifdef SSG_TEST_PRINT
-        std::cout << "test_hoffman_random complete. "<< std::endl;
+        std::cout << "test_hoffman complete. "<< std::endl;
     #endif
         
 }
 
 
+
+
+
+
+
+void test_randomized_hoffman(int n_tests, int n_strats_per_game, int n_vertices){
+    for(int i = 0; i<n_tests; i++){
+        #ifdef SSG_TEST_PRINT
+            std::cout << "testing random game: " << i+1 << "/" << n_tests << std::endl;
+        #endif
+        SSG game = SSG::random_game_loopless(n_vertices);
+
+        std::vector<std::vector<bool>> rand_strats(n_strats_per_game);
+        std::vector<std::vector<bool>> opts_strat(n_strats_per_game);
+
+        for(int k = 0; k<n_strats_per_game; k++){
+            auto rand_strat = SSG::random_strategy(game.n);
+            std::vector<bool> r_opt = game.tripathi_hoffman_karp(rand_strat);
+            rand_strats.push_back(rand_strat);
+            opts_strat.push_back(r_opt);
+        } 
+        #ifdef SSG_TEST_PRINT
+            std::cout << std::endl;
+            for(int i = 0; i<rand_strats.size(); i++){
+                if(rand_strats[i].size() && opts_strat[i].size()){
+                    printt(rand_strats[i], game);
+                    std::cout << "\t";
+                    printt(opts_strat[i], game);
+                    std::cout << "\t";
+                    auto p = game.probabilities(opts_strat[i]);
+                    printt(p); std::cout << std::endl;
+                }
+            }std::cout << std::endl;
+
+            for(std::vector<bool> s: opts_strat){
+                if(s.size()){
+                    
+                }
+            }std::cout << std::endl;
+        #endif
+    }
+    #ifdef SSG_TEST_PRINT
+        std::cout << "test_hoffman complete. "<< std::endl;
+    #endif
+        
+}
+
+
+std::vector<std::vector<bool>(SSG::*)(std::vector<bool>)> SSG_algorithms= {&SSG::incorrect_hoffman_karp, &SSG::tripathi_hoffman_karp, &SSG::hoffman_karp};
+
+void benchmark_SSG(int n_games, int n_strats_per_game, int n_vertices){
+    std::cout << "n: " << n_vertices;
+
+    std::vector<SSG> games(n_games, SSG::random_game_loopless(n_vertices));
+    std::vector<std::vector<bool>> random_strategies(n_strats_per_game, SSG::random_strategy(n_vertices));
+
+    for(auto cur_algo: SSG_algorithms){
+        auto start = std::chrono::system_clock::now();
+        for(SSG cur_game: games){
+            for(std::vector<bool> cur_strat: random_strategies){
+                std::vector<bool> opt = (cur_game.*cur_algo)(cur_strat);
+            }
+        }
+        auto end = std::chrono::system_clock::now();
+        std::chrono::duration<double> elapsed_seconds = end - start;
+        std::cout << '\t' << elapsed_seconds.count() ;
+    }   
+    std::cout << std::endl;
+}

@@ -50,40 +50,12 @@ int main(){
 
     //test_condon_example();  return 0;
 
-    //test_hoffman_random(5, 100); return 0;
-
-
-    /*
-    ifstream myfile;
-    myfile.open("this.txt");
-
-    SSG g = SSG::read_game_file(myfile);
-
-    vector<bool> s = {0,1,1,0,1,1};
-    
-    auto r = g.hoffman_karp(s);
-
-    cout << r;
-
-    return 0;
-    */
-
-
-
-   //TODO.. clean up debugging nonsense and make some benchmarking functions.
-   //debugging stuff in hoffman() and probabilities()
-    // -O3 optimization is on btw.
-    // can speed hoffman up a lot by not iterating back through the vertices n^2 times
+    //test_hoffman(5, 100); return 0;
     
 
-
-    for(int i = 5; i<10000; i++){
-        auto start = std::chrono::system_clock::now();
-        test_hoffman_random(3,i);
-        auto end = std::chrono::system_clock::now();
-        std::chrono::duration<double> elapsed_seconds = end - start;
-        cout << i << "\t" << elapsed_seconds.count() << endl;
+    for(int i = 10; i<500; i+=5){
+       benchmark_SSG(100,5,i);
     }
-
+    
     return 0;
 }
