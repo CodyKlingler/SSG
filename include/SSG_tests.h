@@ -14,3 +14,5 @@ void test_hoffman(int n_tests, int n_strats_per_game, int n_vertices);
 void test_randomized_hoffman(int n_tests, int n_strats_per_game, int n_vertices);
 
 void benchmark_SSG(int n_games, int n_strats_per_game, int n_vertices);
+
+bool test_correctness(int n_games, int n_strats_per_game, int n_vertices);

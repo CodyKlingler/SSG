@@ -19,43 +19,39 @@
 using namespace std;
  
 
-// export a game to a file
-// export strategies to a file
-// load game and strategies
-
-//convert SSG::outgoing_edge 2 vector.
-
-
-/*
-
-std::chrono::time_point<std::chrono::system_clock> start, end;
-  
-    start = std::chrono::system_clock::now();
-    std::cout << "f(42) = " << fibonacci(42) << '\n';
-    end = std::chrono::system_clock::now();
-  
-    std::chrono::duration<double> elapsed_seconds = end - start;
-    std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-  
-    std::cout << "finished computation at " << std::ctime(&end_time)
-              << "elapsed time: " << elapsed_seconds.count() << "s\n";
+/* TODO 
+    -investigate Derman's LP for finding optimal min strategy
 
 */
 
 
-
 int main(){
     srand(time(NULL));
+    
+
+    SSG g = condon_game();
+
+    vector<bool> s = {0,1,0,1,1,0,0,0,0,0};
+    
+    auto p = g.probabilities(s);
+
     std::cout << std::fixed << std::setprecision(3);
+    cout << s << "\t" << p << endl;
 
-    //test_condon_example();  return 0;
+    return 0;
 
-    //test_hoffman(5, 100); return 0;
-    
-
-    for(int i = 10; i<500; i+=5){
-       benchmark_SSG(100,5,i);
+    for(int i = 6; i< 1000000; i++){
+        cout << i << endl;
+        if(!test_correctness(i*i*i*i,i*2,i)){
+           cout << "bad!";
+           return 0;
+        }
     }
-    
+
+    for(int i = 10; i<10000; i+=5){
+       benchmark_SSG(i,i,i);
+    }
+
+   
     return 0;
 }
