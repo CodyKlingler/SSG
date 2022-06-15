@@ -9,6 +9,12 @@
 
 //#define SSG_TEST_PRINT
 
+std::vector<std::vector<bool>(SSG::*)(std::vector<bool>)> SSG_algorithms = {&SSG::tripathi_hoffman_karp, &SSG::hoffman_karp};
+std::vector<const char*> SSG_algorithm_names = {"tripathi", "hoff-karp"};
+
+std::vector<std::vector<bool>(SSG::*)(std::vector<bool>)> unused_algorithms = {&SSG::incorrect_hoffman_karp};
+std::vector<const char*> unused_names = {"incorrect hoff-karp"};
+
 
 const char* opt_strat_condon = "X 1 X X 1 X 0 X X X";
 std::vector<bool> optimal_condon = {0,1,0,1,1,0,0,0,0,0};
@@ -22,7 +28,7 @@ void printt(std::vector<bool> s){
 }
 
 void printt(std::vector<bool> s, SSG game){
-    for(int i = 0; i < s.size(); i++){
+    for(uint i = 0; i < s.size(); i++){
         vertex_type t = game.type[i];
 
         if(t == vertex_type::max || t == vertex_type::min){
@@ -191,10 +197,6 @@ void test_randomized_hoffman(int n_tests, int n_strats_per_game, int n_vertices)
 }
 
 
-std::vector<std::vector<bool>(SSG::*)(std::vector<bool>)> SSG_algorithms= {&SSG::incorrect_hoffman_karp, &SSG::tripathi_hoffman_karp, &SSG::hoffman_karp};
-std::vector<const char*> SSG_algorithm_names = {"incorrect hoff-karp", "tripathi", "hoff-karp"};
-
-
 void benchmark_SSG(int n_games, int n_strats_per_game, int n_vertices){
     std::cout << "n: " << n_vertices;
 
@@ -222,7 +224,7 @@ bool test_correctness(int n_games, int n_strats_per_game, int n_vertices){
     bool strats_written = false;
     bool bad_strat_ever_found = false;
 
-    std::vector<SSG> games(n_games, SSG::random_game_loopless(n_vertices));
+    std::vector<SSG> games(n_games, SSG::random_game(n_vertices));
     std::vector<std::vector<bool>> random_strategies(n_strats_per_game, SSG::random_strategy(n_vertices));
     for(SSG cur_game: games){
             //algo  //strategy       //vertex_p  
@@ -283,13 +285,13 @@ bool test_correctness(int n_games, int n_strats_per_game, int n_vertices){
             if(!strats_written){
                 for(int i = 0; i<n_strats_per_game; i++){
                     std::string num_str = std::to_string(i);
-                    myfile.open ("folder/test_correctness_strat_" + num_str + ".txt");
+                    myfile.open ("folder/strat_" + num_str + ".txt");
                     myfile << random_strategies[i];
                     myfile.close();
                 }
             }
             std::string num_str = std::to_string(n_games_written++);
-            myfile.open("folder/test_correctnes_game_" + num_str + ".txt");
+            myfile.open("folder/game_" + num_str + ".txt");
             myfile << cur_game;
             myfile.close();
         }

@@ -253,10 +253,10 @@ std::vector<double> SSG::probabilities(std::vector<bool> combined_strategy){
     }
 
     /*
-    Eigen::SparseMatrix<long double, Eigen::ColMajor> M;
+    Eigen::SparseMatrix< double, Eigen::ColMajor> M;
     VectorXld res;
     //filling up M, filling up load
-    Eigen::SparseLU< Eigen::SparseMatrix<long double, Eigen::ColMajor> > LUSolver;
+    Eigen::SparseLU< Eigen::SparseMatrix<double, Eigen::ColMajor> > LUSolver;
     LUSolver.analyzePattern(M);
     LUSolver.factorize(M);
     res = LUSolver.solve(load);
@@ -266,15 +266,12 @@ std::vector<double> SSG::probabilities(std::vector<bool> combined_strategy){
 
     coeffs.push_back(Triplet<double>(min_sink_vertex,min_sink_vertex,2));
     
-    SparseMatrix<double> mat(n,n); 
+    Eigen::SparseMatrix< double, Eigen::ColMajor> mat(n,n); 
     mat.setFromTriplets(coeffs.begin(), coeffs.end());  // fill A and b;
 
-    LeastSquaresConjugateGradient<SparseMatrix<double> > solver;
-
-    solver.setTolerance(0);
+    Eigen::SparseQR< Eigen::SparseMatrix<double, Eigen::ColMajor> , Eigen::COLAMDOrdering<int>> solver;
 
     mat.makeCompressed();
-
     solver.compute(mat);
 
     VectorXd vec = VectorXd::Zero(n);
@@ -288,9 +285,9 @@ std::vector<double> SSG::probabilities(std::vector<bool> combined_strategy){
     int vec_size = x.rows();
 
 
-    std::cout << mat << std::endl << vec << std::endl;
+    //std::cout << mat << std::endl << vec << std::endl;
 
-    std::cout << "err: " << solver.error();
+    //std::cout << "err: " << solver.error();
  
     return std::vector<double>(probs_temp, probs_temp + vec_size);
 }
@@ -408,7 +405,7 @@ std::vector<bool> SSG::hoffman_karp(std::vector<bool> s){
             }
         }while(max_has_switchable_edge && !max_vert_was_switched);
 
-        vert_switched_any = optimize_min(s);
+        vert_switched_any |= optimize_min(s);
         probs = probabilities(s);
 
     }while(vert_switched_any);
@@ -570,6 +567,26 @@ SSG SSG::random_game_loopless(int n){
         vertex_type type = (vertex_type)(rand()%3+1);
         int j = random()%(n - i) + i;
         int k = random()%(n - i) + i;
+
+        game.set_vertex(i, type, j, k);
+    }
+
+    return game;
+}
+
+SSG SSG::random_game(int n){
+    SSG game(n);
+
+    if(n<2)
+        return game;
+
+    game.set_vertex(n-2, vertex_type::sink_min, n-2, n-2);
+    game.set_vertex(n-1, vertex_type::sink_max, n-1, n-1);
+
+    for(int i = n-3; i>= 0; i--){
+        vertex_type type = (vertex_type)(rand()%3+1);
+        int j = random()%n;
+        int k = random()%n;
 
         game.set_vertex(i, type, j, k);
     }

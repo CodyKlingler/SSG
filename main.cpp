@@ -14,6 +14,7 @@
 #include "include/Strategy.h" //include Strategy.h before SSG.h
 #include "include/SSG.h"
 #include "include/SSG_tests.h"
+#include "lp_c++.h"
 
 
 using namespace std;
@@ -27,31 +28,53 @@ using namespace std;
 
 int main(){
     srand(time(NULL));
-    
-
-    SSG g = condon_game();
-
-    vector<bool> s = {0,1,0,1,1,0,0,0,0,0};
-    
-    auto p = g.probabilities(s);
-
     std::cout << std::fixed << std::setprecision(3);
-    cout << s << "\t" << p << endl;
 
-    return 0;
+    return main2();
 
-    for(int i = 6; i< 1000000; i++){
-        cout << i << endl;
-        if(!test_correctness(i*i*i*i,i*2,i)){
-           cout << "bad!";
-           return 0;
+    #define aba
+
+    #ifdef aba
+        std::ifstream myfile;
+        myfile.open("folder/game_0.txt");
+        SSG g = SSG::read_game_file(myfile);
+        myfile.close();
+
+
+        myfile.open("folder/strat_0.txt");
+        auto s = SSG::read_strategy_file(myfile);
+        myfile.close();
+
+        auto hk = g.hoffman_karp(s);
+        auto hki = g.incorrect_hoffman_karp(s);
+        auto tr = g.tripathi_hoffman_karp(s);
+
+        auto hkp = g.probabilities(hk);
+        auto hkip = g.probabilities(hki);
+        auto trp = g.probabilities(tr);
+
+        cout << hk << "\t" << hkp << endl;
+        cout << hki << "\t" << hkip << endl;
+        cout << tr << "\t" << trp << endl;
+
+        return 0;
+    #endif
+    
+    for(int j = 6; j< 100; j++){
+        cout << j << endl;
+        for(int i = 1; i< 500; i++){
+            if(!test_correctness(1,1,6)){
+            cout << "bad!";
+            return 0;
+            }
         }
     }
-
+    
+/*
     for(int i = 10; i<10000; i+=5){
-       benchmark_SSG(i,i,i);
+       benchmark_SSG(1,1,i);
     }
-
+*/
    
     return 0;
 }
