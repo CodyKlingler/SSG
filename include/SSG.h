@@ -33,7 +33,8 @@ class SSG{
         int max_sink_vertex = -1;
         int token;
         std::vector<bool> strat;
-
+        double tolerance = .0001;
+        double c = 0.00010;
    
         SSG(int n_vertices);
         //SSG(const SSG &game); //TODO
@@ -49,6 +50,7 @@ class SSG{
         void print_graph();
 
         std::vector<double> probabilities(std::vector<bool>strategy);
+        std::vector<double> exact_probabilities(std::vector<bool> strategy);
 
 
         //STRATEGY SOLVING ALGORITHMS

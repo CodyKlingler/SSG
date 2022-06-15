@@ -239,7 +239,7 @@ bool test_correctness(int n_games, int n_strats_per_game, int n_vertices){
             opt_probs.emplace_back(cur_algo_probs);
         }
 
-        const double tolerance = .00001;
+        const double tolerance = .002;
 
         bool bad_strat_found = false;
 
@@ -298,4 +298,59 @@ bool test_correctness(int n_games, int n_strats_per_game, int n_vertices){
     }   
 
     return !bad_strat_ever_found;
+}
+
+
+
+const double init_c = .0000000001;
+
+double ccc = 0;
+
+bool probs_match(const std::vector<double> &p1, const std::vector<double> &p2, double tolerance){
+    for(uint i = 0; i< std::min(p1.size(), p2.size());i++){
+        double delta = std::abs(p1[i] - p2[i]);
+        if(delta > tolerance){
+            if(ccc == init_c){
+                std::cout << p1 << std::endl << p2 << std::endl;
+                }
+            return false;
+        }
+    }
+    return true;
+}
+
+
+//create test to compare probabilities for c = 0, vs c = .001 for loopless games
+
+double test_stopping_constant(int n_games, int n_strats_per_game, int n_vertices){
+   
+    SSG game = SSG::random_game(n_vertices);
+    game.c = 0;
+
+    auto opt_s = game.hoffman_karp();
+    auto opt_p = game.exact_probabilities(opt_s);
+
+    for(double cc = init_c; cc < 1; cc+=cc*1.3 ){
+        ccc = cc;
+        game.c = cc;
+        auto new_s = game.hoffman_karp();
+        auto new_p = game.exact_probabilities(new_s);
+        
+        if(!probs_match(opt_p, new_p, .001)){
+            if(cc == init_c){
+
+                std::ofstream myfile;
+
+
+                std::string num_str = std::to_string(42);
+                myfile.open("folder/game_" + num_str + ".txt");
+                myfile << game;
+                myfile.close();
+
+                std::cout << opt_s << std::endl << new_s;
+            }
+            return cc;
+        }
+    }
+    return 1;
 }
