@@ -24,16 +24,83 @@ using namespace std;
     -investigate Derman's LP for finding optimal min strategy
     -reserve matrix
     -find function for SSG.c and SSG.tolerance
-
+    -tripathi
+    -function to convert non-stopping game into a stopping game.
 */
 
+
+std::vector<std::vector<bool>(SSG::*)(std::vector<bool>)> algorithms = {&SSG::tripathi_hoffman_karp, &SSG::hoffman_karp, &SSG::bruteforce };
+std::vector<const char*> algorithm_names = {"tripathi", "hoff-karp", "bruteforce"};
+std::vector<const char*> algorithm_abbrev = {"tp", "hk", "bf"};
+
+
+const int n_strats = 5;
+const int n_verts = 3;
+
+
+double show_files(int max_file){
+    std::ifstream myfile;
+    myfile.open("folder/game_0.txt");
+    SSG g = SSG::read_game_file(myfile);
+    myfile.close();
+
+    vector<vector<bool>> strats(0);
+
+    for(int i = 0; i< max_file; i++){
+        std::string num = std::to_string(i);
+        myfile.open("folder/strat_" +num+".txt");
+        auto s = SSG::read_strategy_file(myfile);
+        strats.push_back(s);
+        myfile.close();
+    }
+    std::vector<bool> qq;
+
+    for(uint a = 0; a<algorithms.size(); a++){
+
+        auto algo = algorithms[a];
+        for(auto s: strats){
+            if(s.size()<=0)
+                continue;
+            auto tr = (g.*algo)(s);
+            auto trp = g.exact_probabilities(tr);
+            auto trpp = g.probabilities(tr);
+            //cout << algorithm_abbrev[a] << ":  " << tr << "\t" << trp << "\t" << trpp << endl;
+            qq = s;
+        }
+    }
+    double og_beta = g.beta;
+    //printf("%.32f\n", g.beta);
+    while(!SSG::probs_match(g.exact_probabilities(g.hoffman_karp(qq)),g.exact_probabilities(g.bruteforce(qq)),.0001)){
+        g.beta *= 1.1;
+        if(g.beta > 1){
+            cout << "SOMEFING WONG AS WONG CAN BE" << endl;
+            break;
+        }
+    }
+    double min_valid = g.beta;
+
+    while(SSG::probs_match(g.exact_probabilities(g.hoffman_karp(qq)),g.exact_probabilities(g.bruteforce(qq)),.0001)){
+        g.beta *= 1.33333;
+        if(g.beta > 1){
+            //cout << "." << endl;
+            break;
+        }
+    }
+
+    double max_valid = g.beta;
+
+
+    printf("%.8f\t%.8f\t%.8f\n", max_valid, min_valid, og_beta);
+    return g.beta/og_beta;
+}
+
 int find_bad_game(){
-    for(int v = 10; v<100; v++){
+    for(int v = n_verts; v<100; v++){
         cout << v << endl;
-        for(int j = 0; j< 500; j++){
-                if(!test_correctness(1,10,v)){
-                    cout << "bad!";
-                    return 0;
+        for(int j = 0; j< 2; j++){
+                int n_games = 1;   
+                if(!test_correctness(n_games,n_strats,v)){
+                    show_files(n_strats);
                 }
         }
     }
@@ -42,77 +109,44 @@ int find_bad_game(){
 
 
 int main(){
-    srand(time(NULL));
-    std::cout << std::fixed << std::setprecision(3);
-    const double init_c = .0000000001;
-    //return main2();
-
+    srand(time(NULL)); std::cout << std::fixed << std::setprecision(3);
     
+    //show_files(n_strats); return 0;
+
+    SSG g = SSG::random_game(4);
+    SSG sg = g.stopping_game();
+
+    ofstream myfile;
+    myfile.open("folder/g.txt");
+    myfile << g;
+    myfile.close();
+    myfile.open("folder/sg.txt");
+    myfile << sg;
+    myfile.close();
+
+    return 0;
+
+    for(int i = 4; i<100; i++){
+        benchmark_SSG(1000,1,i);
+    }
+
     find_bad_game(); return 0;
+
 
     for(int i= 4; i<10000; i++){
         double minr = 99;
         double ave = 0;
-        for(int j = 0; j<100; j++){
+        for(int j = 0; j<10; j++){
             double r = test_stopping_constant(3,3,i);
             minr = std::min(minr, r);
             ave += r;
-            if(r == init_c)
+    //        if(r == init_c)
                 return 0;
         }
         printf("v:%i \tmin: %.7f\tave: %.7f\n", i, minr, ave/100.0);
     }
-
     return 0;
 
-    std::cout << endl;
-    
-    #define aba
-
-    #ifdef aba
-        std::ifstream myfile;
-        myfile.open("folder/game_0.txt");
-        SSG g = SSG::read_game_file(myfile);
-        myfile.close();
-
-
-        int max_file = 9;
-        vector<vector<bool>> strats(0);
-
-        for(int i = 0; i<= max_file; i++){
-            std::string num = std::to_string(i);
-            myfile.open("folder/strat_" +num+".txt");
-            auto s = SSG::read_strategy_file(myfile);
-            strats.push_back(s);
-            myfile.close();
-        }
-
-        for(auto s: strats){
-            auto hk = g.hoffman_karp(s);
-            auto hki = g.incorrect_hoffman_karp(s);
-            auto tr = g.tripathi_hoffman_karp(s);
-
-            auto hkp = g.exact_probabilities(hk);
-            auto hkip = g.exact_probabilities(hki);
-            auto trp = g.exact_probabilities(tr);
-
-            cout << "hk: "<<  hk << "\t" << hkp << endl;
-            //cout << hki << "\t" << hkip << endl;
-            cout << "tr: " << tr << "\t" << trp << endl;
-        }
-
-        while(g.exact_probabilities(g.hoffman_karp(strats[0]))[0]>.5){
-            g.c *= 10;
-        }
-
-        printf("%.15f\n", g.c);
-
-
-        return 0;
-    #endif
-    
-
-    
 /*
     for(int i = 10; i<10000; i+=5){
        benchmark_SSG(1,1,i);

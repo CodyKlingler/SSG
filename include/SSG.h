@@ -34,7 +34,8 @@ class SSG{
         int token;
         std::vector<bool> strat;
         double tolerance = .0001;
-        double c = 0.00010;
+        const double c = 3;
+        double beta = 0.00010;
    
         SSG(int n_vertices);
         //SSG(const SSG &game); //TODO
@@ -49,8 +50,10 @@ class SSG{
 
         void print_graph();
 
-        std::vector<double> probabilities(std::vector<bool>strategy);
-        std::vector<double> exact_probabilities(std::vector<bool> strategy);
+        SSG stopping_game();
+
+        std::vector<double> probabilities(const std::vector<bool> &strategy);
+        std::vector<double> exact_probabilities(const std::vector<bool> &strategy);
 
 
         //STRATEGY SOLVING ALGORITHMS
@@ -60,6 +63,9 @@ class SSG{
 
         bool optimize_max(std::vector<bool> &s);
         bool optimize_max(std::vector<bool> &s, std::vector<double> probs);
+
+        std::vector<bool> bruteforce();
+        std::vector<bool> bruteforce(std::vector<bool> s);
 
         std::vector<bool> hoffman_karp();
         std::vector<bool> hoffman_karp(std::vector<bool> s);
@@ -76,6 +82,8 @@ class SSG{
         static std::vector<bool> random_strategy(int n);
         static SSG read_game_file(std::ifstream &file);
         static std::vector<bool> read_strategy_file(std::ifstream &file);
+        static bool probs_match(const std::vector<double> &p1, const std::vector<double> &p2, double tolerance);
+
 
         friend std::ostream& operator<<(std::ostream& stream, const SSG& game);
 
@@ -85,6 +93,9 @@ class SSG{
 
         void set_vertex_type(int vertex, vertex_type type);
         void set_edges(int vertex, int e1, int e2);
+        bool increment_min_strat(std::vector<bool> &s);
+        bool increment_max_strat(std::vector<bool> &s);
+        std::vector<bool> bruteforce_max(std::vector<bool> s);
 };
 
 // << operator for strategies

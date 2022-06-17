@@ -9,8 +9,8 @@
 
 //#define SSG_TEST_PRINT
 
-std::vector<std::vector<bool>(SSG::*)(std::vector<bool>)> SSG_algorithms = {&SSG::tripathi_hoffman_karp, &SSG::hoffman_karp};
-std::vector<const char*> SSG_algorithm_names = {"tripathi", "hoff-karp"};
+std::vector<std::vector<bool>(SSG::*)(std::vector<bool>)> SSG_algorithms = {&SSG::tripathi_hoffman_karp, &SSG::hoffman_karp};//, &SSG::bruteforce };
+std::vector<const char*> SSG_algorithm_names = {"tripathi", "hoff-karp", "bruteforce"};
 
 std::vector<std::vector<bool>(SSG::*)(std::vector<bool>)> unused_algorithms = {&SSG::incorrect_hoffman_karp};
 std::vector<const char*> unused_names = {"incorrect hoff-karp"};
@@ -198,7 +198,7 @@ void test_randomized_hoffman(int n_tests, int n_strats_per_game, int n_vertices)
 
 
 void benchmark_SSG(int n_games, int n_strats_per_game, int n_vertices){
-    std::cout << "n: " << n_vertices;
+    std::cout << n_vertices;
 
     std::vector<SSG> games(n_games, SSG::random_game_loopless(n_vertices));
     std::vector<std::vector<bool>> random_strategies(n_strats_per_game, SSG::random_strategy(n_vertices));
@@ -224,7 +224,7 @@ bool test_correctness(int n_games, int n_strats_per_game, int n_vertices){
     bool strats_written = false;
     bool bad_strat_ever_found = false;
 
-    std::vector<SSG> games(n_games, SSG::random_game(n_vertices));
+    std::vector<SSG> games(n_games, SSG::random_game_loopless(n_vertices));
     std::vector<std::vector<bool>> random_strategies(n_strats_per_game, SSG::random_strategy(n_vertices));
     for(SSG cur_game: games){
             //algo  //strategy       //vertex_p  
@@ -233,7 +233,7 @@ bool test_correctness(int n_games, int n_strats_per_game, int n_vertices){
             std::vector<std::vector<double>> cur_algo_probs;
             for(std::vector<bool> cur_strat: random_strategies){
                 std::vector<bool> opt = (cur_game.*cur_algo)(cur_strat);
-                auto cur_p = cur_game.probabilities(opt);
+                auto cur_p = cur_game.exact_probabilities(opt);
                 cur_algo_probs.emplace_back(cur_p);
             }
             opt_probs.emplace_back(cur_algo_probs);
@@ -261,7 +261,7 @@ bool test_correctness(int n_games, int n_strats_per_game, int n_vertices){
 
                 double diff_s = abs(max_prob_s - min_prob_s);
                 if(diff_s > tolerance){
-                    std::cout << "correctness test for " << SSG_algorithm_names[a] << " produces inconsistent strategies" << std::endl;
+                    //std::cout << "correctness test for " << SSG_algorithm_names[a] << " produces inconsistent strategies" << std::endl;
                     bad_strat_found = true;
                     bad_strat_ever_found = true;
                 }
@@ -270,7 +270,7 @@ bool test_correctness(int n_games, int n_strats_per_game, int n_vertices){
 
             double diff_v = abs(max_prob_v - min_prob_v);
             if(diff_v > tolerance){
-                std::cout << "correctness test produced inconsistent results between algorithms" << std::endl;
+                //std::cout << "correctness test produced inconsistent results between algorithms" << std::endl;
                 bad_strat_found = true;
                 bad_strat_ever_found = true;
             }
@@ -301,16 +301,15 @@ bool test_correctness(int n_games, int n_strats_per_game, int n_vertices){
 }
 
 
-
 const double init_c = .0000000001;
 
-double ccc = 0;
+double global_cur_beta = 0;
 
 bool probs_match(const std::vector<double> &p1, const std::vector<double> &p2, double tolerance){
     for(uint i = 0; i< std::min(p1.size(), p2.size());i++){
         double delta = std::abs(p1[i] - p2[i]);
         if(delta > tolerance){
-            if(ccc == init_c){
+            if(global_cur_beta == init_c){
                 std::cout << p1 << std::endl << p2 << std::endl;
                 }
             return false;
@@ -325,19 +324,19 @@ bool probs_match(const std::vector<double> &p1, const std::vector<double> &p2, d
 double test_stopping_constant(int n_games, int n_strats_per_game, int n_vertices){
    
     SSG game = SSG::random_game(n_vertices);
-    game.c = 0;
+    game.beta = 0;
 
     auto opt_s = game.hoffman_karp();
     auto opt_p = game.exact_probabilities(opt_s);
 
-    for(double cc = init_c; cc < 1; cc+=cc*1.3 ){
-        ccc = cc;
-        game.c = cc;
+    for(double cur_beta = init_c; cur_beta < 1; cur_beta+=cur_beta*1.3 ){
+        global_cur_beta = cur_beta;
+        game.beta = cur_beta;
         auto new_s = game.hoffman_karp();
         auto new_p = game.exact_probabilities(new_s);
         
         if(!probs_match(opt_p, new_p, .001)){
-            if(cc == init_c){
+            if(cur_beta == init_c){
 
                 std::ofstream myfile;
 
@@ -349,7 +348,7 @@ double test_stopping_constant(int n_games, int n_strats_per_game, int n_vertices
 
                 std::cout << opt_s << std::endl << new_s;
             }
-            return cc;
+            return cur_beta;
         }
     }
     return 1;

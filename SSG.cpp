@@ -40,6 +40,7 @@ SSG::SSG(int vertices){
 
     n_steps_terminate = 1000*n;
 
+    beta = 1/pow(2, n*c);
 }
 
 void SSG::set_vertex_type(int vertex, vertex_type type){
@@ -160,7 +161,6 @@ int SSG::play(int starting_vertex, std::vector<bool> combined_strategy){
 }
 
 double SSG::play_n(int starting_vertex, std::vector<bool> combined_strategy, int n_trials){
-
     long max_wins = 0;
 
     for(int i = 0; i<n_trials; i++){
@@ -212,11 +212,41 @@ void SSG::print_graph(){
     }
 }
 
-std::vector<double> SSG::probabilities(std::vector<bool> combined_strategy){
+//gv + gv*c*n
+
+SSG SSG::stopping_game(){
+    int n_sg_vertices = n + c*n*2*n;
+    SSG sg(n*(c+1)); // n + c*edges... edges = n*2
+
+    int v_in_sg = 0;
+
+    for(int gv = 0; gv<n; gv++){
+        auto gv_type = type[gv];
+        min_sink_vertex;
+
+        sg.set_vertex(gv, gv_type, n+ c*n*gv, n+c*n*gv+c*n);
+
+        for(int e = 0; e <= 1; e++){
+            int chain_start = n+c*n*gv + c*n*e;
+            int chain_end = n+c*n*gv + c*n*e + c*n-1;
+
+            for(int i=  chain_start; i<chain_end; i++){
+                sg.set_vertex(i, vertex_type::ave, i+1, min_sink_vertex);
+            }
+            sg.set_vertex(chain_end, vertex_type::ave, outgoing_edge[gv][e], min_sink_vertex);
+        }
+    }
+    return sg;
+}
+
+
+
+
+std::vector<double> SSG::probabilities(const std::vector<bool> &combined_strategy){
     using namespace Eigen;
 
-    if(c <= 0)
-        c = 0.000000000001;
+    if(beta <= 0) //TODO. Remove????
+        beta = 0.000000000001;
     
 
     std::vector<Triplet<double>> coeffs(n*3);
@@ -227,7 +257,7 @@ std::vector<double> SSG::probabilities(std::vector<bool> combined_strategy){
 
         coeffs.push_back(Triplet<double>(*it,*it,1));
         if(*it != p){
-            coeffs.push_back(Triplet<double>(*it,p,-1+c));
+            coeffs.push_back(Triplet<double>(*it,p,-1+beta));
         }
     }
 
@@ -237,7 +267,7 @@ std::vector<double> SSG::probabilities(std::vector<bool> combined_strategy){
 
         coeffs.push_back(Triplet<double>(*it,*it,1));
         if(*it != p){
-            coeffs.push_back(Triplet<double>(*it,p,-1+c));
+            coeffs.push_back(Triplet<double>(*it,p,-1+beta));
         }
     }
 
@@ -246,7 +276,7 @@ std::vector<double> SSG::probabilities(std::vector<bool> combined_strategy){
         int p1 = outgoing_edge[*it][0];
         int p2 = outgoing_edge[*it][1];
 
-        coeffs.push_back(Triplet<double>(*it,*it,1));
+        coeffs.push_back(Triplet<double>(*it,*it,1+beta));
 
         double relation = -.5;
         if(*it == p1 || *it == p2 || p1 == p2){
@@ -285,19 +315,12 @@ std::vector<double> SSG::probabilities(std::vector<bool> combined_strategy){
     return std::vector<double>(probs_temp, probs_temp + vec_size);
 }
 
-std::vector<double> SSG::exact_probabilities(std::vector<bool> combined_strategy){
-    double p_c = c;
-    c = 0.000000000001;
+std::vector<double> SSG::exact_probabilities(const std::vector<bool> &combined_strategy){
+    double prev_beta = beta;
+    beta = 0.000000000001;
     auto p = probabilities(combined_strategy);
-    c = p_c;
+    beta = prev_beta;
     return p;
-}
-
-
-
-std::vector<bool> SSG::hoffman_karp(){
-    std::vector<bool> s(n,0);
-    return hoffman_karp(s);
 }
 
 bool SSG::optimize_min(std::vector<bool> &s){
@@ -346,7 +369,7 @@ bool SSG::optimize_max(std::vector<bool> &s, std::vector<double> probs){
         bool ever_switched = false;
         do{
             min_switched_edge = false;
-            for(auto cur_v: min_vertices){
+            for(auto cur_v: max_vertices){
                 
                 s[cur_v] = !s[cur_v];
                 auto alternate_prob = probabilities(s);
@@ -358,7 +381,7 @@ bool SSG::optimize_max(std::vector<bool> &s, std::vector<double> probs){
                 double delta = p_other - p_cur;
                 delta = abs(delta);
 
-                if(delta > tolerance && p_other < p_cur){
+                if(delta > tolerance && p_other > p_cur){
                     s[cur_v] = !s[cur_v]; //switch edge.
                     probs = alternate_prob; //update probability vector
 
@@ -370,6 +393,98 @@ bool SSG::optimize_max(std::vector<bool> &s, std::vector<double> probs){
     return ever_switched;
 }
 
+
+bool SSG::increment_min_strat(std::vector<bool> &s){
+    for(int m: min_vertices){
+        bool prev_state = s[m];
+
+        s[m] = !s[m];
+        if(!prev_state){
+            return true;
+        }
+    }
+    return false;
+}
+
+bool SSG::increment_max_strat(std::vector<bool> &s){
+    for(int m: max_vertices){
+        bool prev_state = s[m];
+
+        s[m] = !s[m];
+        if(!prev_state){
+            return true;
+        }
+    }
+    return false;
+}
+
+
+std::vector<bool> SSG::bruteforce_max(std::vector<bool> s){
+    std::vector<bool> best_strat(n,0);
+    double best_strat_sum = -9e99;
+
+    for(int m: max_vertices){
+        s[m] = false;
+    }
+
+    do{
+        auto p = exact_probabilities(s);
+        double sum_p = 0;
+        for(double c_p: p){
+            sum_p += c_p;
+        }
+
+        if(sum_p > best_strat_sum){
+            best_strat_sum = sum_p;
+            for(uint i = 0; i<n; i++){
+                best_strat[i] = s[i];
+            }
+        }
+
+    }while(increment_max_strat(s));
+    return best_strat;
+}
+
+
+std::vector<bool> SSG::bruteforce(){
+    std::vector<bool> s(n,0);
+    return bruteforce(s);
+}
+
+std::vector<bool> SSG::bruteforce(std::vector<bool> s){
+    std::vector<bool> best_strat(n,0);
+    double best_strat_sum = 9e99;
+
+    for(int m: min_vertices){
+        s[m] = false;
+    }
+
+    do{
+        optimize_max(s);
+        //s = bruteforce_max(s);
+        auto p = exact_probabilities(s);
+        double sum_p = 0;
+        for(double c_p: p){
+            sum_p += c_p;
+        }
+
+        if(sum_p < best_strat_sum){
+            best_strat_sum = sum_p;
+            for(uint i = 0; i<n; i++){
+                best_strat[i] = s[i];
+            }
+        }
+
+    }while(increment_min_strat(s));
+    optimize_max(best_strat);
+    return best_strat;
+}
+
+
+std::vector<bool> SSG::hoffman_karp(){
+    std::vector<bool> s(n,0);
+    return hoffman_karp(s);
+}
 std::vector<bool> SSG::hoffman_karp(std::vector<bool> s){
     int iterations_to_convergence = 0;
 
@@ -419,9 +534,6 @@ std::vector<bool> SSG::incorrect_hoffman_karp(){
 }
 
 std::vector<bool> SSG::incorrect_hoffman_karp(std::vector<bool> s){
-    
-    int player_loops = 0;
-
     auto probs = probabilities(s);
 
     bool vert_switched_any;
@@ -564,6 +676,18 @@ std::vector<bool> SSG::read_strategy_file(std::ifstream &file){
     }
     return vec;
 }
+
+
+bool SSG::probs_match(const std::vector<double> &p1, const std::vector<double> &p2, double tolerance){
+    for(uint i = 0; i< std::min(p1.size(), p2.size());i++){
+        double delta = std::abs(p1[i] - p2[i]);
+        if(delta > tolerance){
+            return false;
+        }
+    }
+    return true;
+}
+
 
 std::ostream& operator<<(std::ostream& os, const SSG &game)
 {
