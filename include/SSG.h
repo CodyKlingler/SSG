@@ -34,7 +34,7 @@ class SSG{
         int token;
         std::vector<bool> strat;
         double tolerance = .0001;
-        const double c = 3;
+        const int c = 3;
         double beta = 0.00010;
    
         SSG(int n_vertices);

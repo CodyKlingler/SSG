@@ -107,14 +107,67 @@ int find_bad_game(){
     return 0;
 }
 
+int find_bad_stopping(    int n_verts){
+    SSG g = SSG::random_game(n_verts);
+    SSG sg = g.stopping_game();
+
+    auto gg = g.hoffman_karp();
+    auto sgg = sg.hoffman_karp();
+
+    auto ggp = g.exact_probabilities(gg);
+    auto sgp = sg.exact_probabilities(sgg);
+
+    bool match = SSG::probs_match(ggp, sgp, .001);
+
+    if(!match){
+
+        cout << ggp << endl;
+        cout << sgp << endl;
+
+        cout << endl;
+        cout << g << endl;
+        //cout << sg << endl;
+
+        ofstream myfile;
+        myfile.open("folder/g.txt");
+        myfile << g;
+        myfile.close();
+        myfile.open("folder/sg.txt");
+        myfile << sg;
+        myfile.close();
+    }
+
+    return match;
+}
+
 
 int main(){
     srand(time(NULL)); std::cout << std::fixed << std::setprecision(3);
     
     //show_files(n_strats); return 0;
 
-    SSG g = SSG::random_game(4);
+    for(int i = 0; i<10000; i++){
+        if(!find_bad_stopping(7)){
+            break;
+        }
+    } return 0;
+
+    SSG g = SSG::random_game(7);
     SSG sg = g.stopping_game();
+
+    auto gg = g.hoffman_karp();
+    auto sgg = sg.hoffman_karp();
+
+    auto ggp = g.exact_probabilities(gg);
+    auto sgp = sg.exact_probabilities(sgg);
+
+    cout << ggp << endl;
+    cout << sgp << endl;
+
+
+    return 0;
+
+
 
     ofstream myfile;
     myfile.open("folder/g.txt");

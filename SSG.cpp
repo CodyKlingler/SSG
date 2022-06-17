@@ -216,22 +216,21 @@ void SSG::print_graph(){
 
 SSG SSG::stopping_game(){
     int n_sg_vertices = n + c*n*2*n;
-    SSG sg(n*(c+1)); // n + c*edges... edges = n*2
-
-    int v_in_sg = 0;
+    //std::cout << "sg_n: " << n_sg_vertices << std::endl;
+    SSG sg(n_sg_vertices); // n + c*edges... edges = n*2
 
     for(int gv = 0; gv<n; gv++){
         auto gv_type = type[gv];
-        min_sink_vertex;
 
-        sg.set_vertex(gv, gv_type, n+ c*n*gv, n+c*n*gv+c*n);
+        sg.set_vertex(gv, gv_type, n+ c*n*2*gv, n+c*n*gv*2+c*n);
+        //std::cout << gv << ":  " << n+ c*n*2*gv << "  "<< n+c*n*gv*2+c*n << std::endl;
 
         for(int e = 0; e <= 1; e++){
-            int chain_start = n+c*n*gv + c*n*e;
-            int chain_end = n+c*n*gv + c*n*e + c*n-1;
+            int chain_start = n+c*n*gv*2 + c*n*e;
+            int chain_end = n+c*n*gv*2 + c*n*e + c*n-1;
 
             for(int i=  chain_start; i<chain_end; i++){
-                sg.set_vertex(i, vertex_type::ave, i+1, min_sink_vertex);
+                sg.set_vertex(i, vertex_type::ave, outgoing_edge[gv][e], i+1);
             }
             sg.set_vertex(chain_end, vertex_type::ave, outgoing_edge[gv][e], min_sink_vertex);
         }
@@ -436,7 +435,7 @@ std::vector<bool> SSG::bruteforce_max(std::vector<bool> s){
 
         if(sum_p > best_strat_sum){
             best_strat_sum = sum_p;
-            for(uint i = 0; i<n; i++){
+            for(int i = 0; i<n; i++){
                 best_strat[i] = s[i];
             }
         }
@@ -470,7 +469,7 @@ std::vector<bool> SSG::bruteforce(std::vector<bool> s){
 
         if(sum_p < best_strat_sum){
             best_strat_sum = sum_p;
-            for(uint i = 0; i<n; i++){
+            for(int i = 0; i<n; i++){
                 best_strat[i] = s[i];
             }
         }
