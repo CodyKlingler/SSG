@@ -111,18 +111,25 @@ int find_bad_stopping(    int n_verts){
     SSG g = SSG::random_game(n_verts);
     SSG sg = g.stopping_game();
 
-    auto gg = g.hoffman_karp();
-    auto sgg = sg.hoffman_karp();
+    auto gg = sg.hoffman_karp();
+    auto sgg = sg.bruteforce();
+    //auto sghk = sg.hoffman_karp()
 
-    auto ggp = g.exact_probabilities(gg);
+    //gg = sg.random_strategy();
+
+    auto ggp = sg.exact_probabilities(gg);
     auto sgp = sg.exact_probabilities(sgg);
-
     bool match = SSG::probs_match(ggp, sgp, .001);
 
     if(!match){
-
-        cout << ggp << endl;
-        cout << sgp << endl;
+        for(int i= 0; i < n_verts; i++){
+            cout << sgp[i] << " ";
+        } cout << endl;
+        for(int i= 0; i < n_verts; i++){
+            cout << ggp[i]<< " ";
+        } cout << endl;
+        //cout << ggp << endl;
+        //cout << sgp << endl;
 
         cout << endl;
         cout << g << endl;
@@ -146,8 +153,13 @@ int main(){
     
     //show_files(n_strats); return 0;
 
+
+    main2(); return 0;
+
     for(int i = 0; i<10000; i++){
-        if(!find_bad_stopping(7)){
+        if(i%10 == 0)
+            cout << i << endl;
+        if(!find_bad_stopping(6)){
             break;
         }
     } return 0;
