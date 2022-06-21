@@ -33,8 +33,8 @@ class SSG{
         int max_sink_vertex = -1;
         int token;
         std::vector<bool> strat;
-        double tolerance = .0001;
-        const int c = 3;
+        double tolerance = .01;
+        const int c = 2;
         double beta = 0.00010;
    
         SSG(int n_vertices);
@@ -69,6 +69,12 @@ class SSG{
 
         std::vector<bool> hoffman_karp();
         std::vector<bool> hoffman_karp(std::vector<bool> s);
+        
+        std::vector<bool> ludwig();
+        std::vector<bool> ludwig(const std::vector<bool> &s);
+
+        std::vector<bool> ludwig_iterative();
+        std::vector<bool> ludwig_iterative(std::vector<bool> s);
 
         std::vector<bool> incorrect_hoffman_karp(std::vector<bool> s);
         std::vector<bool> incorrect_hoffman_karp();

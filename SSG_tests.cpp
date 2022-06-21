@@ -9,8 +9,8 @@
 
 //#define SSG_TEST_PRINT
 
-std::vector<std::vector<bool>(SSG::*)(std::vector<bool>)> SSG_algorithms = {&SSG::tripathi_hoffman_karp, &SSG::hoffman_karp};//, &SSG::bruteforce };
-std::vector<const char*> SSG_algorithm_names = {"tripathi", "hoff-karp", "bruteforce"};
+std::vector<std::vector<bool>(SSG::*)(std::vector<bool>)> SSG_algorithms = { &SSG::bruteforce, &SSG::ludwig_iterative,  &SSG::hoffman_karp, &SSG::tripathi_hoffman_karp };
+std::vector<const char*> SSG_algorithm_names = {"hoff-karp", "ludwig"};
 
 std::vector<std::vector<bool>(SSG::*)(std::vector<bool>)> unused_algorithms = {&SSG::incorrect_hoffman_karp};
 std::vector<const char*> unused_names = {"incorrect hoff-karp"};
@@ -200,7 +200,7 @@ void test_randomized_hoffman(int n_tests, int n_strats_per_game, int n_vertices)
 void benchmark_SSG(int n_games, int n_strats_per_game, int n_vertices){
     std::cout << n_vertices;
 
-    std::vector<SSG> games(n_games, SSG::random_game_loopless(n_vertices));
+    std::vector<SSG> games(n_games, SSG::random_game(n_vertices));
     std::vector<std::vector<bool>> random_strategies(n_strats_per_game, SSG::random_strategy(n_vertices));
 
     for(auto cur_algo: SSG_algorithms){
@@ -224,7 +224,7 @@ bool test_correctness(int n_games, int n_strats_per_game, int n_vertices){
     bool strats_written = false;
     bool bad_strat_ever_found = false;
 
-    std::vector<SSG> games(n_games, SSG::random_game_loopless(n_vertices));
+    std::vector<SSG> games(n_games, SSG::random_game(n_vertices));
     std::vector<std::vector<bool>> random_strategies(n_strats_per_game, SSG::random_strategy(n_vertices));
     for(SSG cur_game: games){
             //algo  //strategy       //vertex_p  
@@ -239,7 +239,7 @@ bool test_correctness(int n_games, int n_strats_per_game, int n_vertices){
             opt_probs.emplace_back(cur_algo_probs);
         }
 
-        const double tolerance = .002;
+        const double tolerance = games[0].tolerance;
 
         bool bad_strat_found = false;
 
@@ -261,18 +261,20 @@ bool test_correctness(int n_games, int n_strats_per_game, int n_vertices){
 
                 double diff_s = abs(max_prob_s - min_prob_s);
                 if(diff_s > tolerance){
-                    //std::cout << "correctness test for " << SSG_algorithm_names[a] << " produces inconsistent strategies" << std::endl;
+                   // std::cout << "correctness test for " << SSG_algorithm_names[a] << " produces inconsistent strategies" << std::endl;
                     bad_strat_found = true;
                     bad_strat_ever_found = true;
+                    break;
                 }
             }
 
 
             double diff_v = abs(max_prob_v - min_prob_v);
             if(diff_v > tolerance){
-                //std::cout << "correctness test produced inconsistent results between algorithms" << std::endl;
+               //std::cout << "correctness test produced inconsistent results between algorithms" << std::endl;
                 bad_strat_found = true;
                 bad_strat_ever_found = true;
+                break;
             }
         }
         // write strategies to file. 
@@ -335,7 +337,7 @@ double test_stopping_constant(int n_games, int n_strats_per_game, int n_vertices
         auto new_s = game.hoffman_karp();
         auto new_p = game.exact_probabilities(new_s);
         
-        if(!probs_match(opt_p, new_p, .001)){
+        if(!probs_match(opt_p, new_p, game.tolerance)){
             if(cur_beta == init_c){
 
                 std::ofstream myfile;
@@ -352,4 +354,106 @@ double test_stopping_constant(int n_games, int n_strats_per_game, int n_vertices
         }
     }
     return 1;
+}
+
+
+int find_bad_stopping();
+
+int find_bad_stopping(int n_verts){
+    SSG g = SSG::random_game(n_verts);
+    SSG sg = g.stopping_game();
+
+    auto hk_s = sg.hoffman_karp();
+    auto bf_s = sg.bruteforce();
+    //auto sghk = sg.hoffman_karp()
+
+    //gg = sg.random_strategy();
+
+    auto hk_ep = sg.exact_probabilities(hk_s);
+    auto bf_ep = sg.exact_probabilities(bf_s);
+
+    auto hk_p = sg.probabilities(hk_s);
+    auto bf_p = sg.probabilities(bf_s);
+
+    bool match = SSG::probs_match(hk_ep, bf_ep, g.tolerance);
+
+
+    if(!match){
+        std::ofstream myfile;
+        myfile.open("folder/g.txt");
+        myfile << g;
+        myfile.close();
+        myfile.open("folder/sg.txt");
+        myfile << sg;
+        myfile.close();
+
+        find_bad_stopping();
+    }
+
+    return match;
+}
+
+int find_bad_stopping(){
+
+    std::ifstream myfile;
+
+    myfile.open("folder/g.txt");
+
+    SSG g = SSG::read_game_file(myfile);
+    int n_verts = g.n;
+
+    SSG sg = g.stopping_game();
+
+    auto hk_s = sg.hoffman_karp();
+    auto hkn_s = g.hoffman_karp();
+    auto bf_s = sg.bruteforce();
+    //auto sghk = sg.hoffman_karp()
+
+    //gg = sg.random_strategy();
+
+    auto hk_ep = sg.exact_probabilities(hk_s);
+    auto hkn_ep = g.exact_probabilities(hkn_s);
+    auto bf_ep = sg.exact_probabilities(bf_s);
+
+    auto hk_p = sg.probabilities(hk_s);
+    auto hkn_p = g.probabilities(hkn_s);
+    auto bf_p = sg.probabilities(bf_s);
+
+    bool match = SSG::probs_match(hk_ep, bf_ep, g.tolerance);
+
+ 
+        std::cout << "bruteforce exact: ";
+        for(int i= 0; i < n_verts; i++){
+            std::cout << bf_ep[i] << " ";
+        } std::cout << std::endl;
+        std::cout << "hoff_karp exact:  ";
+        for(int i= 0; i < n_verts; i++){
+            std::cout << hk_ep[i]<< " ";
+        } std::cout << std::endl;
+        std::cout << "hk_direct exact:  ";
+        for(int i= 0; i < n_verts; i++){
+            std::cout << hkn_ep[i]<< " ";
+        } std::cout << std::endl;
+
+        std::cout << "bruteforce: \t  ";
+        for(int i= 0; i < n_verts; i++){
+            std::cout << bf_p[i] << " ";
+        } std::cout << std::endl;
+        std::cout << "hoff_karp: \t  ";
+        for(int i= 0; i < n_verts; i++){
+            std::cout << hk_p[i]<< " ";
+        } std::cout << std::endl;
+        std::cout << "hk_direct: \t  ";
+        for(int i= 0; i < n_verts; i++){
+            std::cout << hkn_p[i]<< " ";
+        } std::cout << std::endl;
+
+        std::cout << bf_s << std::endl;
+        std::cout << hk_s << std::endl;
+
+        std::cout << std::endl;
+        std::cout << g << std::endl;
+        //cout << sg << endl;  
+
+    return match;
 }

@@ -18,20 +18,19 @@
 
 
 using namespace std;
- 
 
-/* TODO 
-    -investigate Derman's LP for finding optimal min strategy
+
+/* TODO
     -reserve matrix
-    -find function for SSG.c and SSG.tolerance
-    -tripathi
-    -function to convert non-stopping game into a stopping game.
+    -function for probabability of a single vertex
+        -may massively speed up all algorithms
+        -can use old probability if there is no self reference?
 */
 
 
-std::vector<std::vector<bool>(SSG::*)(std::vector<bool>)> algorithms = {&SSG::tripathi_hoffman_karp, &SSG::hoffman_karp, &SSG::bruteforce };
-std::vector<const char*> algorithm_names = {"tripathi", "hoff-karp", "bruteforce"};
-std::vector<const char*> algorithm_abbrev = {"tp", "hk", "bf"};
+std::vector<std::vector<bool>(SSG::*)(std::vector<bool>)> algorithms = {&SSG::bruteforce, &SSG::ludwig_iterative,  &SSG::hoffman_karp, &SSG::tripathi_hoffman_karp };
+std::vector<const char*> algorithm_names = {"ludwig", "bruteforce"};
+std::vector<const char*> algorithm_abbrev = {"lw", "bf"};
 
 
 const int n_strats = 5;
@@ -70,17 +69,17 @@ double show_files(int max_file){
     }
     double og_beta = g.beta;
     //printf("%.32f\n", g.beta);
-    while(!SSG::probs_match(g.exact_probabilities(g.hoffman_karp(qq)),g.exact_probabilities(g.bruteforce(qq)),.0001)){
-        g.beta *= 1.1;
+    while(!SSG::probs_match(g.exact_probabilities((g.*algorithms[0])(qq)),g.exact_probabilities((g.*algorithms[1])(qq)),g.tolerance)){
+        g.beta *= 1.25;
         if(g.beta > 1){
-            cout << "SOMEFING WONG AS WONG CAN BE" << endl;
+            cout << "Correct solution not found for any beta value tested." << endl;
             break;
         }
     }
     double min_valid = g.beta;
 
-    while(SSG::probs_match(g.exact_probabilities(g.hoffman_karp(qq)),g.exact_probabilities(g.bruteforce(qq)),.0001)){
-        g.beta *= 1.33333;
+    while(!SSG::probs_match(g.exact_probabilities((g.*algorithms[0])(qq)),g.exact_probabilities((g.*algorithms[1])(qq)),g.tolerance)){
+        g.beta *= 1.25;
         if(g.beta > 1){
             //cout << "." << endl;
             break;
@@ -90,133 +89,52 @@ double show_files(int max_file){
     double max_valid = g.beta;
 
 
-    printf("%.8f\t%.8f\t%.8f\n", max_valid, min_valid, og_beta);
+    printf("invalid >%.8f,\t invalid <%.8f,\t default:%.8f\n", max_valid, min_valid, og_beta);
     return g.beta/og_beta;
 }
 
 int find_bad_game(){
-    for(int v = n_verts; v<100; v++){
+    for(int v = n_verts; v<10; v++){
         cout << v << endl;
         for(int j = 0; j< 2; j++){
-                int n_games = 1;   
+                int n_games = 1;
                 if(!test_correctness(n_games,n_strats,v)){
-                    show_files(n_strats);
+                    //show_files(n_strats);
                 }
         }
     }
     return 0;
 }
 
-int find_bad_stopping(    int n_verts){
-    SSG g = SSG::random_game(n_verts);
-    SSG sg = g.stopping_game();
-
-    auto gg = sg.hoffman_karp();
-    auto sgg = sg.bruteforce();
-    //auto sghk = sg.hoffman_karp()
-
-    //gg = sg.random_strategy();
-
-    auto ggp = sg.exact_probabilities(gg);
-    auto sgp = sg.exact_probabilities(sgg);
-    bool match = SSG::probs_match(ggp, sgp, .001);
-
-    if(!match){
-        for(int i= 0; i < n_verts; i++){
-            cout << sgp[i] << " ";
-        } cout << endl;
-        for(int i= 0; i < n_verts; i++){
-            cout << ggp[i]<< " ";
-        } cout << endl;
-        //cout << ggp << endl;
-        //cout << sgp << endl;
-
-        cout << endl;
-        cout << g << endl;
-        //cout << sg << endl;
-
-        ofstream myfile;
-        myfile.open("folder/g.txt");
-        myfile << g;
-        myfile.close();
-        myfile.open("folder/sg.txt");
-        myfile << sg;
-        myfile.close();
-    }
-
-    return match;
-}
-
-
 int main(){
     srand(time(NULL)); std::cout << std::fixed << std::setprecision(3);
-    
+
     //show_files(n_strats); return 0;
 
-
-    main2(); return 0;
-
-    for(int i = 0; i<10000; i++){
-        if(i%10 == 0)
-            cout << i << endl;
-        if(!find_bad_stopping(6)){
-            break;
-        }
-    } return 0;
-
-    SSG g = SSG::random_game(7);
-    SSG sg = g.stopping_game();
-
-    auto gg = g.hoffman_karp();
-    auto sgg = sg.hoffman_karp();
-
-    auto ggp = g.exact_probabilities(gg);
-    auto sgp = sg.exact_probabilities(sgg);
-
-    cout << ggp << endl;
-    cout << sgp << endl;
+    //gerby(); return 0;
 
 
-    return 0;
-
-
-
-    ofstream myfile;
-    myfile.open("folder/g.txt");
-    myfile << g;
-    myfile.close();
-    myfile.open("folder/sg.txt");
-    myfile << sg;
-    myfile.close();
-
-    return 0;
-
-    for(int i = 4; i<100; i++){
-        benchmark_SSG(1000,1,i);
-    }
-
-    find_bad_game(); return 0;
-
-
-    for(int i= 4; i<10000; i++){
-        double minr = 99;
-        double ave = 0;
-        for(int j = 0; j<10; j++){
-            double r = test_stopping_constant(3,3,i);
-            minr = std::min(minr, r);
-            ave += r;
-    //        if(r == init_c)
-                return 0;
-        }
-        printf("v:%i \tmin: %.7f\tave: %.7f\n", i, minr, ave/100.0);
-    }
-    return 0;
+    const int n_games = 100;
 
 /*
-    for(int i = 10; i<10000; i+=5){
-       benchmark_SSG(1,1,i);
+    for(int v = 5; v<100; v++){
+        cout << v << " vertices" << endl;
+
+        int n_games_failed = 0;
+        for(int g = 0; g<n_games; g++){
+            if(!test_correctness(1,1,v)){
+                show_files(1);
+                n_games_failed++;
+            }
+        }
+        cout << "%" << n_games_failed*100/(double)n_games << " failed for " << v << " vertices" << endl;
     }
 */
-   
+
+    for(int v = 5; v<1000; v++){
+            benchmark_SSG(n_games,3,v);
+    }
+
+
     return 0;
 }

@@ -41,6 +41,7 @@ SSG::SSG(int vertices){
     n_steps_terminate = 1000*n;
 
     beta = 1/pow(2, n*c);
+    beta = .01;
 }
 
 void SSG::set_vertex_type(int vertex, vertex_type type){
@@ -235,6 +236,7 @@ SSG SSG::stopping_game(){
             sg.set_vertex(chain_end, vertex_type::ave, outgoing_edge[gv][e], min_sink_vertex);
         }
     }
+    sg.beta = 0;
     return sg;
 }
 
@@ -244,9 +246,8 @@ SSG SSG::stopping_game(){
 std::vector<double> SSG::probabilities(const std::vector<bool> &combined_strategy){
     using namespace Eigen;
 
-    if(beta <= 0) //TODO. Remove????
-        beta = 0.000000000001;
-    
+    if(beta <= 0) //TODO. Remove???? some probabilities are incorrect with beta = 0
+        beta = 0.0000000001;    
 
     std::vector<Triplet<double>> coeffs(n*3);
 
@@ -593,6 +594,79 @@ std::vector<bool> SSG::tripathi_hoffman_karp(std::vector<bool> s){
         
     }while(vert_switched_any);
     //std::cout << "its: " << iterations_to_convergence << "  ave player loops: " << player_loops / (double)(2*iterations_to_convergence) << std::endl;
+    return s;
+}
+
+std::vector<bool> SSG::ludwig(){
+    std::vector<bool> s(n,0);
+    return ludwig(s);
+}
+
+std::vector<bool> SSG::ludwig(const std::vector<bool> &s){
+    std::vector<bool> selected(n,0);
+    return s;
+    return s;
+}
+
+std::vector<bool> SSG::ludwig_iterative(){
+    std::vector<bool> s(n,0);
+    return ludwig_iterative(s);
+}
+
+std::vector<bool> SSG::ludwig_iterative(std::vector<bool> s){
+    std::vector<int> s_removed(max_vertices.begin(), max_vertices.end());
+    std::vector<int> s_in_game(0);
+
+    auto rd = std::random_device{};
+    auto rng = std::default_random_engine{rd()};
+    std::shuffle(std::begin(s_removed), std::end(s_removed), rng);
+
+    optimize_min(s);
+
+    bool optimal;
+
+    while(s_removed.size()){
+        //std::cout << "'";
+        optimal = true;
+
+        int cur_s = s_removed.back();
+        s_removed.pop_back();
+        s_in_game.push_back(cur_s);
+
+        auto p = probabilities(s);
+
+        for(uint k = 0; k<s_in_game.size(); k++){
+            //std::cout << ",";
+            int j = s_in_game[k];
+
+            s[j] = !s[j];
+            auto new_p = probabilities(s);
+            s[j] = !s[j];
+
+            double delta = abs(p[j] - new_p[j]);
+
+            if(delta > tolerance && new_p[j] > p[j]){
+                s[cur_s] = !s[cur_s];
+                optimize_min(s);
+
+                optimal = false;
+
+                s_in_game.pop_back();
+                s_removed.push_back(cur_s);
+
+                std::shuffle(std::begin(s_in_game), std::end(s_in_game),rng);
+
+                while(s_in_game.size()>0){
+                    int v = s_in_game.back();
+                    s_in_game.pop_back();
+                    s_removed.push_back(v);
+                    //std::cout << ".";
+                }// std::cout << std::endl;
+                break;
+            }
+        } //std::cout << std::endl;
+    } //std::cout << std::endl;
+
     return s;
 }
 

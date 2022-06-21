@@ -60,3 +60,58 @@ int main2()
 
   return 0;
 }
+
+int gerby()
+{
+  try {
+
+    // Create an environment
+    GRBEnv env = GRBEnv(true);
+    env.set("LogFile", "mip1.log");
+    env.start();
+
+    // Create an empty model
+    GRBModel model = GRBModel(env);
+
+    // Create variables
+    GRBVar X = model.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS, "X");
+    GRBVar M = model.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS, "M");
+    GRBVar A = model.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS, "A");
+    //GRBVar XS = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "XS");
+    //GRBVar MS = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "XM");
+
+    #define XS 1
+    #define MS 0
+
+    model.setObjective(X + M + A + XS + MS, GRB_MINIMIZE);
+    //model.addConstr(XS == 1, "max_sink");
+    //model.addConstr(MS == 0, "min_sink");
+
+    model.addConstr(X >= A, "c0");
+    model.addConstr(X >= MS);
+
+    model.addConstr(A == 0.5*(MS + XS));
+    model.addConstr(M == A);
+
+
+
+
+
+    // Optimize model
+    model.optimize();
+
+    cout << "X: " << X.get(GRB_DoubleAttr_X) << endl;
+    cout << "M: " << M.get(GRB_DoubleAttr_X) << endl;
+    cout << "A: " << A.get(GRB_DoubleAttr_X) << endl;
+
+    cout << "Obj: " << model.get(GRB_DoubleAttr_ObjVal) << endl;
+
+  } catch(GRBException e) {
+    cout << "Error code = " << e.getErrorCode() << endl;
+    cout << e.getMessage() << endl;
+  } catch(...) {
+    cout << "Exception during optimization" << endl;
+  }
+
+  return 0;
+}
