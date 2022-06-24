@@ -132,7 +132,7 @@ int main(){
 */
 
     for(int v = 5; v<1000; v++){
-            benchmark_SSG(n_games,3,v);
+            benchmark_SSG(n_games,20,v);
     }
 
 

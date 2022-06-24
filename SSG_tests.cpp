@@ -9,7 +9,7 @@
 
 //#define SSG_TEST_PRINT
 
-std::vector<std::vector<bool>(SSG::*)(std::vector<bool>)> SSG_algorithms = { &SSG::bruteforce, &SSG::ludwig_iterative,  &SSG::hoffman_karp, &SSG::tripathi_hoffman_karp };
+std::vector<std::vector<bool>(SSG::*)(std::vector<bool>)> SSG_algorithms = {&SSG::ludwig_iterative,  &SSG::hoffman_karp, &SSG::tripathi_hoffman_karp };
 std::vector<const char*> SSG_algorithm_names = {"hoff-karp", "ludwig"};
 
 std::vector<std::vector<bool>(SSG::*)(std::vector<bool>)> unused_algorithms = {&SSG::incorrect_hoffman_karp};
@@ -196,23 +196,29 @@ void test_randomized_hoffman(int n_tests, int n_strats_per_game, int n_vertices)
         
 }
 
-
+#include <bits/stdc++.h>
 void benchmark_SSG(int n_games, int n_strats_per_game, int n_vertices){
     std::cout << n_vertices;
 
-    std::vector<SSG> games(n_games, SSG::random_game(n_vertices));
+    std::vector<SSG> games(0);//, SSG::random_game_mod(n_vertices));
+    for(int i = 0; i<n_games; i++){
+        games.push_back(SSG::random_game_mod(n_vertices));
+    }
     std::vector<std::vector<bool>> random_strategies(n_strats_per_game, SSG::random_strategy(n_vertices));
 
     for(auto cur_algo: SSG_algorithms){
-        auto start = std::chrono::system_clock::now();
+        std::vector<double> times(n_games);
         for(SSG cur_game: games){
+            auto start = std::chrono::system_clock::now();
             for(std::vector<bool> cur_strat: random_strategies){
                 std::vector<bool> opt = (cur_game.*cur_algo)(cur_strat);
             }
+            auto end = std::chrono::system_clock::now();
+            std::chrono::duration<double> elapsed_seconds = end - start;
+            times.push_back(elapsed_seconds.count()*1000);
         }
-        auto end = std::chrono::system_clock::now();
-        std::chrono::duration<double> elapsed_seconds = end - start;
-        std::cout << '\t' << elapsed_seconds.count() ;
+        std::sort(times.begin(), times.end());
+        std::cout << '\t' << times[times.size()/2];
     }   
     std::cout << std::endl;
 }

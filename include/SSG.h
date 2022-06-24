@@ -85,6 +85,8 @@ class SSG{
         //GAME AND STRATEGY GENERATION
         static SSG random_game_loopless(int n);
         static SSG random_game(int n);
+        static SSG random_game_equal_split(int n);
+        static SSG random_game_mod(int n);
         static std::vector<bool> random_strategy(int n);
         static SSG read_game_file(std::ifstream &file);
         static std::vector<bool> read_strategy_file(std::ifstream &file);

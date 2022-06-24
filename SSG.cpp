@@ -710,6 +710,63 @@ SSG SSG::random_game(int n){
     return game;
 }
 
+SSG SSG::random_game_equal_split(int n){
+    SSG game(n);
+
+    if(n<2)
+        return game;
+
+    game.set_vertex(n-2, vertex_type::sink_min, n-2, n-2);
+    game.set_vertex(n-1, vertex_type::sink_max, n-1, n-1);
+
+    int p_verts = (n-2)/3;
+
+    for(int i = n-3; i> n-3 - p_verts; i--){
+        vertex_type type = vertex_type::max;
+        int j = random()%n;
+        int k = random()%n;
+
+        game.set_vertex(i, type, j, k);
+    }
+
+    for(int i = n-3 - p_verts; i> n-3 - (p_verts * 2); i--){
+        vertex_type type = vertex_type::min;
+        int j = random()%n;
+        int k = random()%n;
+
+        game.set_vertex(i, type, j, k);
+    }
+    for(int i = n-3 - (p_verts*2); i>= 0; i--){
+        vertex_type type = vertex_type::ave;
+        int j = random()%n;
+        int k = random()%n;
+
+        game.set_vertex(i, type, j, k);
+    }
+
+    return game;
+}
+
+SSG SSG::random_game_mod(int n){
+    SSG game(n);
+
+    if(n<2)
+        return game;
+
+    game.set_vertex(n-2, vertex_type::sink_min, n-2, n-2);
+    game.set_vertex(n-1, vertex_type::sink_max, n-1, n-1);
+
+    for(int i = n-3; i>=0; i--){
+        vertex_type type = (vertex_type)(i%3 +1);
+        int j = random()%n;
+        int k = random()%n;
+
+        game.set_vertex(i, type, j, k);
+    }
+
+    return game;
+}
+
 std::vector<bool> SSG::random_strategy(int n){
     std::vector<bool> s(n,0);
 
