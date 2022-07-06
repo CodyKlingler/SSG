@@ -200,10 +200,7 @@ void test_randomized_hoffman(int n_tests, int n_strats_per_game, int n_vertices)
 void benchmark_SSG(int n_games, int n_strats_per_game, int n_vertices){
     std::cout << n_vertices;
 
-    std::vector<SSG> games(0);//, SSG::random_game_mod(n_vertices));
-    for(int i = 0; i<n_games; i++){
-        games.push_back(SSG::random_game_mod(n_vertices));
-    }
+    std::vector<SSG> games(0,SSG::random_game_mod(n_vertices));
     std::vector<std::vector<bool>> random_strategies(n_strats_per_game, SSG::random_strategy(n_vertices));
 
     for(auto cur_algo: SSG_algorithms){

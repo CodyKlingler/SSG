@@ -41,7 +41,7 @@ class SSG{
         //SSG(const SSG &game); //TODO
         //SSG(std::ifstream& file); //TODO
         void set_vertex(int vertex, vertex_type type, int e1, int e2);
-
+        void force_vertex(int vertex, vertex_type type, int e1, int e2);
 
         void start(int starting_vertex, std::vector<bool> strategy);
         int step(int n_steps = 1);
@@ -61,6 +61,9 @@ class SSG{
         bool optimize_min(std::vector<bool> &s);
         bool optimize_min(std::vector<bool> &s, std::vector<double> probs);
 
+        int optimize_min_iters(std::vector<bool> &s,std::vector<int> &count);
+        int optimize_min_iters(std::vector<bool> &s, std::vector<double> probs,std::vector<int> &count);
+
         bool optimize_max(std::vector<bool> &s);
         bool optimize_max(std::vector<bool> &s, std::vector<double> probs);
 
@@ -69,6 +72,9 @@ class SSG{
 
         std::vector<bool> hoffman_karp();
         std::vector<bool> hoffman_karp(std::vector<bool> s);
+
+        int hoffman_karp_n_iterations();
+        int hoffman_karp_n_iterations(std::vector<bool> s);
         
         std::vector<bool> ludwig();
         std::vector<bool> ludwig(const std::vector<bool> &s);
@@ -87,27 +93,37 @@ class SSG{
         static SSG random_game(int n);
         static SSG random_game_equal_split(int n);
         static SSG random_game_mod(int n);
+        static SSG random_game_max(int n);
+        static SSG random_game_min(int n);
+        static SSG random_game_one_ave(int n);
+        static SSG hard_game_max(int n);
         static std::vector<bool> random_strategy(int n);
         static SSG read_game_file(std::ifstream &file);
+        static SSG read_game(std::string file_name);
         static std::vector<bool> read_strategy_file(std::ifstream &file);
         static bool probs_match(const std::vector<double> &p1, const std::vector<double> &p2, double tolerance);
 
 
         friend std::ostream& operator<<(std::ostream& stream, const SSG& game);
+        friend std::ostream& operator<<=(std::ostream& stream, const SSG& game);
 
     private:
         int n_steps;
         int n_steps_terminate; //after this many steps, the game will be won by MIN.
 
         void set_vertex_type(int vertex, vertex_type type);
+        void force_vertex_type(int vertex, vertex_type type);
+        void force_edges(int vertex, int e1, int e2);
         void set_edges(int vertex, int e1, int e2);
         bool increment_min_strat(std::vector<bool> &s);
         bool increment_max_strat(std::vector<bool> &s);
         std::vector<bool> bruteforce_max(std::vector<bool> s);
 };
 
-// << operator for strategies
+
 std::ostream& operator<<(std::ostream& os, const std::vector<bool> &vec);
 
-// << operator for strategies
+
 std::ostream& operator<<(std::ostream& os, const std::vector<double> &vec);
+
+std::ostream& operator<<(std::ostream& os, const std::vector<int> &vec);

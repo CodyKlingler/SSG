@@ -106,35 +106,268 @@ int find_bad_game(){
     return 0;
 }
 
-int main(){
-    srand(time(NULL)); std::cout << std::fixed << std::setprecision(3);
 
-    //show_files(n_strats); return 0;
-
-    //gerby(); return 0;
+vector<int> hardest_game_switches(0);
 
 
-    const int n_games = 100;
 
-/*
-    for(int v = 5; v<100; v++){
-        cout << v << " vertices" << endl;
+void get_best_txt(vector<int> &vec){
+    ifstream file;
+    file.open("hardest_games/best.txt");
+    std::string cur_line;
 
-        int n_games_failed = 0;
-        for(int g = 0; g<n_games; g++){
-            if(!test_correctness(1,1,v)){
-                show_files(1);
-                n_games_failed++;
+    std::getline(file, cur_line);
+
+    int n = stoi(cur_line);
+
+    std::getline(file, cur_line);
+    std::istringstream iss(cur_line);
+
+    for(int i = 0; i<n; i++){
+        int x;
+        iss >> x;
+        vec.push_back(x);
+    }
+
+    file.close();
+}
+
+void set_best_txt(vector<int> &best_vec){
+    ofstream file;
+    file.open("hardest_games/best.txt");
+    file << best_vec.size() << endl;
+
+    for(auto it = best_vec.begin(); it != best_vec.end(); it++){
+        file << *it << '\t';
+    } file << endl;
+
+    file.close();
+}
+
+void write_hard_game(SSG gg){
+    int v = gg.n;
+    ofstream file;
+    file.open("hardest_games/g" + to_string(v) + ".txt");
+    file << gg;
+    file.close();
+}
+
+
+int make_game_harder(SSG &gg, int &max_switches){
+    //cout << ".." << flush;
+    bool increasing;
+    do{
+        increasing = false;
+        for(int v = 0; v<gg.n-2; v++){
+            vertex_type t_og = gg.type[v];
+            int e1 = gg.outgoing_edge[v][0];
+            int e2 = gg.outgoing_edge[v][1];
+
+            for(int t = 1; t<4; t++){
+                vertex_type type = (vertex_type)t;
+                for(int a = 0; a<gg.n; a++){
+                    for(int b = 0; b<gg.n; b++){
+
+                        gg.force_vertex(v, type, a, b);
+
+                        int switches = gg.hoffman_karp_n_iterations();
+
+                        if(switches > max_switches){
+                            max_switches = switches;
+                            //cout << "SWITCHES: " << switches << endl;
+                            //cout << gg << endl;
+                            increasing = true;
+
+                            t_og = type;
+                            e1 = a;
+                            e2 = b;
+                            if(switches > hardest_game_switches[gg.n]){
+                                hardest_game_switches[gg.n] = switches;
+                                set_best_txt(hardest_game_switches);
+                                write_hard_game(gg);
+                            }
+
+                        }
+                    }
+                }
+            }
+            gg.force_vertex(v, t_og, e1, e2);
+        }
+    }while(increasing);
+    //cout << ",,";
+    return max_switches;
+}
+
+
+void find_hard_game(int v){
+    const int n_games = 1000;
+
+    int max = 0;
+
+    for(int n_g = 0; n_g<n_games; n_g++){
+        SSG g = SSG::random_game_mod(v);
+        
+        int i = g.hoffman_karp_n_iterations();
+
+        if(i > max){
+            max = i;
+            std::ofstream myFile;
+            myFile.open("folder/hard_game.txt");
+            myFile << g;
+            myFile.close();
+        }
+    }
+}
+
+
+void find_hardest_game(int v){
+    const int n_games = 1000;
+
+    int hardest_game_sws = 0;
+    for(int k = 0; k<10; k++){
+
+        int max = 0;
+        for(int n_g = 0; n_g<n_games; n_g++){
+            SSG g = SSG::random_game_mod(v);
+            
+            int i = g.hoffman_karp_n_iterations();
+
+            if(i > max){
+                max = i;
+
+                int q = 0;
+                make_game_harder(g, q);
+
+                if(q > hardest_game_sws){
+                    hardest_game_sws = q;
+                    cout << "SWITCHES: " << q << endl;
+                    cout << g << endl;
+                }
             }
         }
-        cout << "%" << n_games_failed*100/(double)n_games << " failed for " << v << " vertices" << endl;
     }
-*/
+}
 
-    for(int v = 5; v<1000; v++){
-            benchmark_SSG(n_games,20,v);
+
+void print_max_iterations(){
+      for(int v = 6; v<100; v++){
+        int actual_max = 0;
+        for(int i = 0; i<3; i++){
+            find_hard_game(v);
+            std::ifstream myfile;
+            myfile.open("folder/hard_game.txt");
+            SSG ggg = SSG::read_game_file(myfile);
+
+            int max_iters = 0;
+            make_game_harder(ggg, max_iters);
+            if(max_iters > actual_max)
+                actual_max = max_iters;
+        }
+        printf("v:%i -> %i \n", v, actual_max);
+    }
+}
+
+int main(int n, char* args[]){
+    srand(time(NULL)); std::cout << std::fixed << std::setprecision(1);
+    if(hardest_game_switches.size() == 0){
+        get_best_txt(hardest_game_switches);
     }
 
+
+    
+    SSG hg = SSG::read_game("folder/hard_game.txt");
+    SSG gg = SSG::hard_game_max(hg.n);
+
+    int ig = gg.hoffman_karp_n_iterations();
+    cout << endl << endl;
+    int ih = hg.hoffman_karp_n_iterations();
+    cout << ig << "  " << ih << endl;
+
+    //make_game_harder(hg, ih);
+    //cout <<= hg; cout << endl << endl;
+
+    cout << ig << " " << ih << endl;
+
+    return 0;
+    
+    int n_changes = 1;
+
+    while(true){
+        SSG master_gg = SSG::read_game("hardest_games/g10.txt");
+        SSG gg = SSG::read_game("hardest_games/g10.txt");
+        n_changes++;
+        cout << "n_changes: " << n_changes << endl;
+        for(int p = 0; p<n_changes*10000; p++){
+
+            vector<int> changed_verts(0);
+            for(int ch = 0; ch<n_changes; ch++){
+                int v = random()%(gg.n-2);
+                changed_verts.push_back(v);
+
+                vertex_type type = (vertex_type)((random()%3)+1);
+                int e1 = random()%(gg.n-2);
+                int e2 = random()%(gg.n-2);
+                gg.force_vertex(v, type, e1, e2);
+            }
+
+            int i = gg.hoffman_karp_n_iterations();
+            if(i > hardest_game_switches[gg.n]){  
+                cout << "wow!";
+                make_game_harder(gg, i);
+
+                hardest_game_switches[gg.n] = i;
+                set_best_txt(hardest_game_switches);
+                write_hard_game(gg);
+
+                cout << "SW: " << i << endl;
+                cout << gg << endl;
+                n_changes = 1;
+                break;
+            }
+
+            for(auto it = changed_verts.begin(); it!=changed_verts.end(); it++){
+                int old_v = *it;
+                vertex_type old_t = master_gg.type[old_v];
+                int e1 = master_gg.outgoing_edge[old_v][0];
+                int e2 = master_gg.outgoing_edge[old_v][1];
+                gg.force_vertex(old_v, old_t, e1, e2);
+            }
+
+        }
+    }
+
+
+    const int n_games = 30000;
+    const int v = 14;
+
+    while(true){
+        SSG* max_ssg;
+        for(int q = 10; q<16; q++){
+            int max = 0;
+            q = 17;
+            cout << q << endl;
+            for(int n_g = 0; n_g<n_games; n_g++){
+                SSG g = SSG::random_game_one_ave(q);
+                
+                int i = g.hoffman_karp_n_iterations();
+
+                if(i >= max){
+                    max = i;
+                    
+                    if(n_g > 100){
+                        make_game_harder(g, i);
+
+                        if(i >= hardest_game_switches[g.n] && g.max_vertices.size() < g.n-2 && g.min_vertices.size() < g.n-2){
+                            hardest_game_switches[g.n] = i;
+                            set_best_txt(hardest_game_switches);
+                            write_hard_game(g);
+                            cout << "v: " << q << "  sw: " << i << endl;
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     return 0;
 }
