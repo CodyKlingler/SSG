@@ -1,5 +1,9 @@
 
+def lll(i: int) -> int:
+	return pow(3*i*i,i-2)
 
 for i in range(3,16):
-    combos = pow(3*i*i,i-2)
-    print("{} \t {}".format(i, combos))
+    combos = lll(i)
+    increase = combos / lll(i-1)
+    print("{}\t{}\t{}".format(i, increase, combos))
+

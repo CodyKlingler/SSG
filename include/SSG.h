@@ -50,6 +50,8 @@ class SSG{
 
         void print_graph();
 
+        SSG copy();
+
         SSG stopping_game();
 
         std::vector<double> probabilities(const std::vector<bool> &strategy);

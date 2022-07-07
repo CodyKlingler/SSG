@@ -153,6 +153,92 @@ void write_hard_game(SSG gg){
 }
 
 
+
+int make_min_harder(SSG &gg, int &max_switches){
+    //cout << ".." << flush;
+
+    vector<int> vs(gg.min_vertices.begin(), gg.min_vertices.end());
+    for(auto it = vs.begin(); it!= vs.end(); it++){
+        if(*it < 3)
+            vs.erase(it);
+    }
+
+    vector<int> val_e(vs.begin(), vs.end());
+    val_e.insert(end(val_e), begin(gg.ave_vertices), end(gg.ave_vertices));
+    val_e.insert(end(val_e), begin(gg.max_vertices), end(gg.max_vertices));
+
+    vector<int> ts(0);
+    for(int i = 1; i<4; i++){
+        vs.push_back(i);
+    }
+
+    cout << val_e.size() << endl;
+    cout << ts.size()<< endl;
+
+    auto rd = std::random_device{};
+    auto rng = std::default_random_engine{rd()};
+
+
+    bool increasing;
+    do{
+        increasing = false;
+
+        vector<int> v_rand(vs.begin(), vs.end());
+        std::shuffle(std::begin(v_rand), std::end(v_rand), rng);
+
+        for(auto vit = v_rand.begin(); vit!=v_rand.end(); vit++){
+            int v = *vit;
+            vertex_type t_og = gg.type[v];
+            int e1 = gg.outgoing_edge[v][0];
+            int e2 = gg.outgoing_edge[v][1];
+
+            vertex_type type = vertex_type::min;
+
+            vector<int> a_rand(val_e.begin(), val_e.end());
+            std::shuffle(std::begin(a_rand), std::end(a_rand), rng);
+            for(auto ait = a_rand.begin(); ait!=a_rand.end(); ait++){
+                int a = *ait;
+
+                if(a == v)
+                    continue;
+
+                vector<int> b_rand(val_e.begin(), val_e.end());
+                std::shuffle(std::begin(b_rand), std::end(b_rand), rng);
+                for(auto bit = b_rand.begin(); bit!=b_rand.end(); bit++){
+                    int b = *bit;
+
+                    if(b == a || b == v)
+                        continue;
+
+                    gg.force_vertex(v, type, a, b);
+                    
+                    int switches = gg.hoffman_karp_n_iterations();
+
+                    if(switches > max_switches){
+                        max_switches = switches;
+                        //cout << "SWITCHES: " << switches << endl;
+                        //cout << gg << endl;
+                        increasing = true;
+
+                        t_og = type;
+                        e1 = a;
+                        e2 = b;
+                        if(switches > hardest_game_switches[gg.n]){
+                            hardest_game_switches[gg.n] = switches;
+                            set_best_txt(hardest_game_switches);
+                            write_hard_game(gg);
+                        }
+                    }
+                }
+            }
+            gg.force_vertex(v, t_og, e1, e2);
+        }
+    }while(increasing);
+    //cout << ",,";
+    return max_switches;
+}
+
+
 int make_game_harder(SSG &gg, int &max_switches){
     //cout << ".." << flush;
     bool increasing;
@@ -187,6 +273,81 @@ int make_game_harder(SSG &gg, int &max_switches){
                                 write_hard_game(gg);
                             }
 
+                        }
+                    }
+                }
+            }
+            gg.force_vertex(v, t_og, e1, e2);
+        }
+    }while(increasing);
+    //cout << ",,";
+    return max_switches;
+}
+
+
+
+int make_game_harder_rand(SSG &gg, int &max_switches){
+    //cout << ".." << flush;
+
+    vector<int> vs(0);
+    for(int i = 0; i<gg.n-2; i++){
+        vs.push_back(i);
+    }
+
+    vector<int> ts(0);
+    for(int i = 1; i<4; i++){
+        ts.push_back(i);
+    }
+
+    auto rd = std::random_device{};
+    auto rng = std::default_random_engine{rd()};
+
+
+    bool increasing;
+    do{
+        increasing = false;
+
+        vector<int> v_rand(vs.begin(), vs.end());
+        std::shuffle(std::begin(v_rand), std::end(v_rand), rng);
+
+        for(auto vit = v_rand.begin(); vit!=v_rand.end(); vit++){
+            int v = *vit;
+            vertex_type t_og = gg.type[v];
+            int e1 = gg.outgoing_edge[v][0];
+            int e2 = gg.outgoing_edge[v][1];
+
+            vector<int> t_rand(ts.begin(), ts.end());
+            std::shuffle(std::begin(t_rand), std::end(t_rand), rng);
+            for(auto tit = t_rand.begin(); tit!=t_rand.end(); tit++){
+                int t = *tit;
+                vertex_type type = (vertex_type)t;
+
+                vector<int> a_rand(vs.begin(), vs.end());
+                std::shuffle(std::begin(a_rand), std::end(a_rand), rng);
+                for(auto ait = a_rand.begin(); ait!=a_rand.end(); ait++){
+                    int a = *ait;
+                    vector<int> b_rand(vs.begin(), vs.end());
+                    std::shuffle(std::begin(b_rand), std::end(b_rand), rng);
+                    for(auto bit = b_rand.begin(); bit!=b_rand.end(); bit++){
+                        int b = *bit;
+                        gg.force_vertex(v, type, a, b);
+                        
+                        int switches = gg.hoffman_karp_n_iterations();
+
+                        if(switches > max_switches){
+                            max_switches = switches;
+                            //cout << "SWITCHES: " << switches << endl;
+                            //cout << gg << endl;
+                            increasing = true;
+
+                            t_og = type;
+                            e1 = a;
+                            e2 = b;
+                            if(switches > hardest_game_switches[gg.n]){
+                                hardest_game_switches[gg.n] = switches;
+                                set_best_txt(hardest_game_switches);
+                                write_hard_game(gg);
+                            }
                         }
                     }
                 }
@@ -248,6 +409,54 @@ void find_hardest_game(int v){
     }
 }
 
+bool next_combination(SSG &g, int v){
+    if(v<0)
+        return false;
+
+    int e1 = g.outgoing_edge[v][0];
+    int e2 = g.outgoing_edge[v][1];
+
+    vertex_type type = g.type[v];
+
+    bool e1_overflow = e1 >= g.n-1;
+    bool e2_overflow = e2 >= g.n-1 && e1_overflow;
+    bool type_overflow = type == vertex_type::max && e2_overflow;
+
+    e1 = e1_overflow ? 0 : e1+1;
+    e2 = e1_overflow ? e2+1 : e2;
+
+    e2 = e2_overflow ? 0 : e2;
+    type = e2_overflow? (vertex_type)(((int)type)+1) : type;
+
+    type = type_overflow ? vertex_type::ave : type;
+
+    g.force_vertex(v, type, e1, e2);
+
+    return type_overflow ? next_combination(g, v-1) : true;
+}
+
+SSG test_all_games(int n){
+    SSG g(n);
+    for(int i = 0; i<n-2; i++){
+        g.set_vertex(i,vertex_type::ave,0,0);
+    }
+    g.set_vertex(n-1, vertex_type::sink_max, n-1, n-1);
+    g.set_vertex(n-2, vertex_type::sink_min, n-2, n-2);
+
+    int max = 0;
+    vector<SSG> max_gs(0, SSG(n));
+
+    do{
+        int cur = g.hoffman_karp_n_iterations();
+
+        if(cur > max){
+            max = cur;
+            max_gs.push_back(g.copy());
+        }
+    }while(next_combination(g, n-3));
+
+    return max_gs.back();
+}
 
 void print_max_iterations(){
       for(int v = 6; v<100; v++){
@@ -273,20 +482,29 @@ int main(int n, char* args[]){
         get_best_txt(hardest_game_switches);
     }
 
+    for(int i = 4; i<32; i++){
+        SSG x = test_all_games(i);
+        cout << x;
+        cout << i << "-->" << x.hoffman_karp_n_iterations() <<endl<<endl;
+    }
 
-    
+    return 0;
+
+    /*
+
     SSG hg = SSG::read_game("folder/hard_game.txt");
-    SSG gg = SSG::hard_game_max(hg.n);
+
+    SSG gg = SSG::read_game("hardest_games/g"+to_string(hg.n)+".txt");
 
     int ig = gg.hoffman_karp_n_iterations();
     cout << endl << endl;
     int ih = hg.hoffman_karp_n_iterations();
     cout << ig << "  " << ih << endl;
 
-    //make_game_harder(hg, ih);
-    //cout <<= hg; cout << endl << endl;
+    make_min_harder(hg, ih);
+    cout <<= gg; cout << endl << endl;
 
-    cout << ig << " " << ih << endl;
+    cout << ig << "  " << ih << endl;
 
     return 0;
     
@@ -335,39 +553,31 @@ int main(int n, char* args[]){
 
         }
     }
+    */
 
-
-    const int n_games = 30000;
+    const int n_games = 10;
     const int v = 14;
 
     while(true){
         SSG* max_ssg;
-        for(int q = 10; q<16; q++){
+        for(int q = 30; q<32; q++){
             int max = 0;
-            q = 17;
             cout << q << endl;
             for(int n_g = 0; n_g<n_games; n_g++){
                 SSG g = SSG::random_game_one_ave(q);
                 
                 int i = g.hoffman_karp_n_iterations();
 
-                if(i >= max){
-                    max = i;
-                    
-                    if(n_g > 100){
-                        make_game_harder(g, i);
+                make_game_harder_rand(g, i);
 
-                        if(i >= hardest_game_switches[g.n] && g.max_vertices.size() < g.n-2 && g.min_vertices.size() < g.n-2){
-                            hardest_game_switches[g.n] = i;
-                            set_best_txt(hardest_game_switches);
-                            write_hard_game(g);
-                            cout << "v: " << q << "  sw: " << i << endl;
-                        }
-                    }
+                if(i >= hardest_game_switches[g.n] && g.max_vertices.size() < g.n-2 && g.min_vertices.size() < g.n-2){
+                    hardest_game_switches[g.n] = i;
+                    set_best_txt(hardest_game_switches);
+                    write_hard_game(g);
+                    cout << "v: " << q << "  sw: " << i << endl;
                 }
             }
         }
     }
-
     return 0;
 }

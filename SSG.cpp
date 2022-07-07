@@ -266,6 +266,17 @@ void SSG::print_graph(){
     }
 }
 
+
+SSG SSG::copy(){
+    SSG g(n);
+
+    for(int i = 0; i<n; i++){
+        g.set_vertex(i, type[i], outgoing_edge[i][0], outgoing_edge[i][1]);
+    }
+    return g;
+}
+
+
 //gv + gv*c*n
 
 SSG SSG::stopping_game(){
@@ -566,9 +577,9 @@ std::vector<bool> SSG::hoffman_karp(std::vector<bool> s){
                 if(delta > tolerance && p_other > p_cur){
                     max_has_switchable_edge = true;
                     // NOTICE: random()%2 has 1/2 of selecting current edge.
-                        vert_switched_any = true;
-                        max_vert_was_switched = true;
-                        s[cur_v] = !s[cur_v]; //switch edge.
+                    vert_switched_any = true;
+                    max_vert_was_switched = true;
+                    s[cur_v] = !s[cur_v]; //switch edge.
                 }
             }
         }while(max_has_switchable_edge && !max_vert_was_switched);
@@ -661,21 +672,22 @@ int SSG::hoffman_karp_n_iterations(std::vector<bool> s){
                         //std::cout << "x: " << s << std::endl;
                 }
             }
-            total_switches += max_vertices.size();
         }while(max_has_switchable_edge && !max_vert_was_switched);
-
-        std::cout << "x: " << probabilities(s) << std::endl;
+        total_switches++;
+        //std::cout << "x: " << probabilities(s) << std::endl;
 
         int min_verts_switched = optimize_min_iters(s,switch_count);
-        total_switches += min_verts_switched;
 
         bool any_min_switched = min_verts_switched > (int)min_vertices.size();
         vert_switched_any |= any_min_switched;
-        std::cout << "n: ";
         probs = probabilities(s);
-        std::cout << probs << std::endl;
+
+        //std::cout << "n: ";
+        //std::cout << probs << std::endl;
 
     }while(vert_switched_any);
+
+    /*
     //std::cout << "its: " << iterations_to_convergence << "  ave player loops: " << player_loops / (double)(2*iterations_to_convergence) << std::endl;
     std:: cout << "n:  ";
     for(int i = 0; i<n; i++){
@@ -686,6 +698,7 @@ int SSG::hoffman_karp_n_iterations(std::vector<bool> s){
     for(int i = 0; i<n; i++){
         std::cout << (int)type[i] << "   ";
     } std::cout << std::endl;
+    */
     
     return total_switches;
 }
