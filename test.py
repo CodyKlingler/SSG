@@ -1,6 +1,6 @@
 
 def lll(i: int) -> int:
-	return pow(3*i*i,i-2)
+	return pow(3*(i-1)/2,i-2)
 
 for i in range(3,16):
     combos = lll(i)

@@ -1165,7 +1165,7 @@ void SSG::force_edges(int vertex, int e1, int e2){
 
     //out of range for vertices
     if(e1 >= n || e1 < 0 || e2 >= n || e2 < 0){
-        std::cerr << "WARNING SSG::set_edges e1 or e2 out of bounds" << std::endl;
+        std::cerr << "WARNING SSG::set_edges e1 or e2 out of bounds. e1: "  << e1 << "\te2: " << e2 << std::endl;
         return;
     }
 

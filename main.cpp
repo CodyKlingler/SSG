@@ -252,7 +252,7 @@ int make_game_harder(SSG &gg, int &max_switches){
             for(int t = 1; t<4; t++){
                 vertex_type type = (vertex_type)t;
                 for(int a = 0; a<gg.n; a++){
-                    for(int b = 0; b<gg.n; b++){
+                    for(int b = a; b<gg.n; b++){
 
                         gg.force_vertex(v, type, a, b);
 
@@ -326,7 +326,7 @@ int make_game_harder_rand(SSG &gg, int &max_switches){
                 std::shuffle(std::begin(a_rand), std::end(a_rand), rng);
                 for(auto ait = a_rand.begin(); ait!=a_rand.end(); ait++){
                     int a = *ait;
-                    vector<int> b_rand(vs.begin(), vs.end());
+                    vector<int> b_rand(vs.begin()+a, vs.end());
                     std::shuffle(std::begin(b_rand), std::end(b_rand), rng);
                     for(auto bit = b_rand.begin(); bit!=b_rand.end(); bit++){
                         int b = *bit;
@@ -422,10 +422,11 @@ bool next_combination(SSG &g, int v){
     bool e2_overflow = e2 >= g.n-1 && e1_overflow;
     bool type_overflow = type == vertex_type::max && e2_overflow;
 
-    e1 = e1_overflow ? 0 : e1+1;
     e2 = e1_overflow ? e2+1 : e2;
-
     e2 = e2_overflow ? 0 : e2;
+
+    e1 = e1_overflow ? e2 : e1+1;
+
     type = e2_overflow? (vertex_type)(((int)type)+1) : type;
 
     type = type_overflow ? vertex_type::ave : type;
@@ -458,6 +459,74 @@ SSG test_all_games(int n){
     return max_gs.back();
 }
 
+
+bool next_combination_most(SSG &g, int v){
+    if(v<0)
+        return false;
+
+    int e1 = g.outgoing_edge[v][0];
+    int e2 = g.outgoing_edge[v][1];
+
+    vertex_type type = g.type[v];
+
+    bool e2_overflow = e2 >= g.n-1;
+    bool e1_overflow = e1 >= g.n-1 && e2_overflow;
+    bool type_overflow = type == vertex_type::max && e1_overflow;
+
+    e1 = e2_overflow ? e1+1 : e1;
+    e1 = e1_overflow ? 0 : e1;
+
+    e2 = e2_overflow ? e1 : e2+1;
+
+    type = e1_overflow? (vertex_type)(((int)type)+1) : type;
+
+    type = type_overflow ? vertex_type::ave : type;
+
+    //cout << v << " -> "<< e1 << " " << e2 << endl;
+    g.force_vertex(v, type, e1, e2);
+
+    
+    if(!type_overflow && type == vertex_type::max){
+        if(e1 == e2)
+            return next_combination_most(g,v);
+    }
+
+    if(!type_overflow && type == vertex_type::ave){
+        if(e1 == e2 || e1 == v || e2 == v)
+            return next_combination_most(g,v);
+    }
+    
+
+    return type_overflow ? next_combination_most(g, v-1) : true;
+}
+
+SSG test_most_games(int n){
+    SSG g(n);
+    for(int i = 0; i<n-2; i++){
+        g.set_vertex(i,vertex_type::ave,0,0);
+    }
+    g.set_vertex(n-1, vertex_type::sink_max, n-1, n-1);
+    g.set_vertex(n-2, vertex_type::sink_min, n-2, n-2);
+
+    double max = 0;
+    vector<SSG> max_gs(0, SSG(n));
+
+    do{
+        if(g.max_vertices.size()>0){
+            int cur = g.hoffman_karp_n_iterations();
+
+            if(cur/(double)g.max_vertices.size() > max){
+                max = cur/(double)g.max_vertices.size();
+                max_gs.push_back(g.copy());
+                cout << g << cur << endl << endl;
+            }
+        }
+    }while(next_combination_most(g, n-3));
+
+    return max_gs.back();
+}
+
+
 void print_max_iterations(){
       for(int v = 6; v<100; v++){
         int actual_max = 0;
@@ -483,7 +552,7 @@ int main(int n, char* args[]){
     }
 
     for(int i = 4; i<32; i++){
-        SSG x = test_all_games(i);
+        SSG x = test_most_games(i);
         cout << x;
         cout << i << "-->" << x.hoffman_karp_n_iterations() <<endl<<endl;
     }
