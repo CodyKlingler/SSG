@@ -77,6 +77,8 @@ class SSG{
 
         int hoffman_karp_n_iterations();
         int hoffman_karp_n_iterations(std::vector<bool> s);
+        int hoffman_karp_n_iterations_strat();
+        int hoffman_karp_n_iterations_strat(std::vector<bool> s);
         
         std::vector<bool> ludwig();
         std::vector<bool> ludwig(const std::vector<bool> &s);
@@ -99,6 +101,9 @@ class SSG{
         static SSG random_game_min(int n);
         static SSG random_game_one_ave(int n);
         static SSG hard_game_max(int n);
+        static SSG random_game_n_max(int n_max, int n);
+        static SSG hardest_possible_game(int n);
+
         static std::vector<bool> random_strategy(int n);
         static SSG read_game_file(std::ifstream &file);
         static SSG read_game(std::string file_name);

@@ -6,10 +6,10 @@ ODIR=obj
 
 LIBS=-lm
 
-_DEPS = SSG.h Strategy.h SSG_tests.h gurobi_c++.h gurobi_c.h
+_DEPS = SSG.h Strategy.h SSG_tests.h gurobi_c++.h gurobi_c.h permute.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ = main.o SSG.o Strategy.o SSG_tests.o libgurobi_c++.a lp_c++.o libgurobi_g++5.2.a libgurobi.so.9.5.1 libgurobi95.so
+_OBJ = main.o SSG.o Strategy.o SSG_tests.o permute.o libgurobi_c++.a lp_c++.o libgurobi_g++5.2.a libgurobi.so.9.5.1 libgurobi95.so
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 
