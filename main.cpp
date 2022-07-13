@@ -368,6 +368,9 @@ int main(int n, char* args[]){
 
     g.hoffman_karp_n_iterations_strat();
 
+    //cout <<= g;
+    cout << endl;
+
 
     return 0;
 

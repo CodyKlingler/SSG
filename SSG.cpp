@@ -726,7 +726,7 @@ int SSG::hoffman_karp_n_iterations_strat(std::vector<bool> s){
                 double aa = std::get<1>(a);
                 double bb = std::get<1>(b);
                 double delta = abs(aa - bb);    
-                return  delta > .01 && aa > bb;
+                return  delta > .0075 && aa > bb; //tolerance
             }
     } pair_comp;
     
@@ -739,7 +739,7 @@ int SSG::hoffman_karp_n_iterations_strat(std::vector<bool> s){
         auto probs = probabilities(s);
 
         std::vector<pair> cur_pair(0);
-        for(int i = 0; i<probs.size(); i++){
+        for(int i = 0; i<probs.size()-2; i++){
             cur_pair.push_back(pair(i, probs[i]));
         } std::stable_sort(cur_pair.begin(), cur_pair.end(), pair_comp);
         x_pairs.push_back(cur_pair);
@@ -780,7 +780,7 @@ int SSG::hoffman_karp_n_iterations_strat(std::vector<bool> s){
 
 
         std::vector<pair> cur_pair_n(0);
-        for(int i = 0; i<probs.size(); i++){
+        for(int i = 0; i<probs.size()-2; i++){
             cur_pair_n.push_back(pair(i, probs[i]));
         } std::stable_sort(cur_pair_n.begin(), cur_pair_n.end(), pair_comp);
         n_pairs.push_back(cur_pair_n);
@@ -834,10 +834,12 @@ int SSG::hoffman_karp_n_iterations_strat(std::vector<bool> s){
     }
 
 
-    Eigen::MatrixXd x(sorted_index.size(), n);
+    Eigen::MatrixXd x(sorted_index.size(), n-2);
 
+
+    std::cout << "vertices sorted by probability: \n";
     for(int r = 0; r<sorted_index.size(); r++){
-        for(int c = 0; c<n; c++){
+        for(int c = 0; c<n-2; c++){
             x(r,c) = sorted_index[r][c];
             std::cout << (int)x(r,c) << '\t';
         }
@@ -847,18 +849,40 @@ int SSG::hoffman_karp_n_iterations_strat(std::vector<bool> s){
     Eigen::MatrixXd centered = x.rowwise() - x.colwise().mean();
     Eigen::MatrixXd cov = (centered.adjoint() * centered) / double(x.rows() - 1);
 
-
-    std::cout << cov << std::endl << std::endl;
-
     for(int c = 0; c<cov.cols(); c++){
-        cov.col(c) /= sqrt(cov(c,c));
+        double var = sqrt(cov(c,c));
+        cov.col(c) /= var;
+        cov.row(c) /= var;
     }
 
-    for(int r = 0; r<cov.rows(); r++){
-        cov.row(c) /= sqrt(cov(r,r));
-    }
-
+    std::cout << "correlation coeff: \n";
     std::cout << cov << std::endl;
+
+
+    Eigen::MatrixXi times_changed = Eigen::MatrixXi::Zero(n-2, n-2);
+    Eigen::MatrixXi prev_order = Eigen::MatrixXi::Zero(n-2, n-2);
+
+    for(int r = 0; r<n-2; r++){
+        for(int c = r+1; c<n-2; c++){
+            prev_order(r,c) = prev_order(c,r) = sorted_index[0][c] > sorted_index[0][r];
+        }
+    }
+
+    for(int i = 1; i<sorted_index.size(); i++){
+         for(int r = 0; r<n-2; r++){
+            for(int c = r+1; c<n-2; c++){
+                bool new_order = sorted_index[i][c] > sorted_index[i][r];
+                if(new_order != prev_order(c,r)){
+
+                    times_changed(r,c) += 1;
+                    times_changed(c,r) += 1;
+                    prev_order(r,c) = prev_order(c,r) = new_order;
+                }
+            }
+        }
+    }
+
+    std::cout << times_changed << std::endl;
 
     //sort each row by probability. (tuple with orig index)
     //store a matrix that contains the location each index took in the sorted array
@@ -867,6 +891,27 @@ int SSG::hoffman_karp_n_iterations_strat(std::vector<bool> s){
 
     return total_switches;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 std::vector<bool> SSG::incorrect_hoffman_karp(){
