@@ -15,10 +15,10 @@
 
 const char* vertex_type_names[] = {
     "undefined",
-    "ave",
-    "min",
-    "max",
     "sink_min",
+    "min",
+    "ave",
+    "max",
     "sink_max"
 };
 
@@ -28,7 +28,7 @@ SSG::SSG(int vertices){
 
     outgoing_edge = std::vector<std::vector<int>>(n,std::vector<int>(2,0));
 
-    incoming_edges = std::vector<std::vector<int>>(n,std::vector<int>());
+    incoming_edges = std::vector<std::set<int>>(n,std::set<int>());
 
     min_vertices = std::vector<int>();
     max_vertices = std::vector<int>();
@@ -232,11 +232,11 @@ void SSG::print_graph(){
 
     for(unsigned int i = 0; i< vec_list.size(); i++){
 
-        const std::vector<int> cur_vec = vec_list[i];
+        auto cur_vec = vec_list[i];
         const char* cur_name = vec_names[i];
 
         std::cout << cur_name << ":  ";
-        for(std::vector<int>::const_iterator it = cur_vec.begin(); it !=  cur_vec.end(); it++){
+        for(auto it = cur_vec.begin(); it !=  cur_vec.end(); it++){
             std:: cout << *it << " " ;
         }
         std::cout << std::endl;
@@ -247,11 +247,11 @@ void SSG::print_graph(){
     std::cout << "\nincoming edges:" << std::endl;
      for(int i = 0; i < n; i++){
 
-        const std::vector<int> cur_vec = incoming_edges[i];
+        auto cur_vec = incoming_edges[i];
 
         std::cout << "(" << i << ") :  ";
 
-        for(std::vector<int>::const_iterator it = cur_vec.begin(); it !=  cur_vec.end(); it++){
+        for(auto it = cur_vec.begin(); it !=  cur_vec.end(); it++){
             std:: cout << *it << " " ;
         }
         std::cout << std::endl;
@@ -276,6 +276,17 @@ SSG SSG::copy(){
     }
     return g;
 }
+
+
+SSG reduce_helper(SSG g){
+
+}
+
+SSG SSG::reduce(){
+    
+
+}
+
 
 
 //gv + gv*c*n
@@ -484,6 +495,16 @@ bool SSG::increment_max_strat(std::vector<bool> &s){
 }
 
 
+std::vector<bool> SSG::strategy_prefer_own(){
+    std::vector<bool> s(n,0);
+    for(int i = 0; i<n; i++){
+        if(type[i] == vertex_type::max){
+            s[i] = 1;
+        }
+    }
+    return s;
+}
+
 std::vector<bool> SSG::bruteforce_max(std::vector<bool> s){
     std::vector<bool> best_strat(n,0);
     double best_strat_sum = -9e99;
@@ -558,9 +579,11 @@ std::vector<bool> SSG::hoffman_karp(std::vector<bool> s){
     do{
         vert_switched_any = false;
 
+        vert_switched_any |= optimize_min(s);
+        auto probs = probabilities(s);
+
         bool max_has_switchable_edge = false;
         bool max_vert_was_switched = false;
-        auto probs = probabilities(s);
         do{ 
             iterations_to_convergence++;
             vert_switched_any = false;
@@ -585,8 +608,88 @@ std::vector<bool> SSG::hoffman_karp(std::vector<bool> s){
             }
         }while(max_has_switchable_edge && !max_vert_was_switched);
 
+    }while(vert_switched_any);
+    //std::cout << "its: " << iterations_to_convergence << "  ave player loops: " << player_loops / (double)(2*iterations_to_convergence) << std::endl;
+    return s;
+}
+
+
+std::vector<bool> SSG::hoffman_karp2(){
+    std::vector<bool> s(n,0);
+    return hoffman_karp2(s);
+}
+std::vector<bool> SSG::hoffman_karp2(std::vector<bool> s){
+    int iterations_to_convergence = 0;
+
+    bool vert_switched_any;
+    do{
+        vert_switched_any = false;
+
         vert_switched_any |= optimize_min(s);
-        probs = probabilities(s);
+        auto probs = probabilities(s);
+        
+        iterations_to_convergence++;
+        vert_switched_any = false;
+        for(int cur_v: max_vertices){
+            
+            int cur_edge = outgoing_edge[cur_v][s[cur_v]];
+            int other_edge = outgoing_edge[cur_v][!s[cur_v]];
+
+            double p_cur = probs[cur_edge];
+            double p_other = probs[other_edge];
+
+            double delta = p_other - p_cur;
+            delta = abs(delta);
+
+            if(delta > tolerance && p_other > p_cur){
+                // NOTICE: random()%2 has 1/2 of selecting current edge.
+                vert_switched_any = true;
+                s[cur_v] = !s[cur_v]; //switch edge.
+            }
+        }
+
+    }while(vert_switched_any);
+    //std::cout << "its: " << iterations_to_convergence << "  ave player loops: " << player_loops / (double)(2*iterations_to_convergence) << std::endl;
+    return s;
+}
+
+
+std::vector<bool> SSG::hoffman_karp2_dermans(){
+    std::vector<bool> s(n,0);
+    return hoffman_karp2(s);
+}
+std::vector<bool> SSG::hoffman_karp2_dermans(std::vector<bool> s){
+    int iterations_to_convergence = 0;
+
+    optimize_min(s);
+    optimize_max(s);
+
+    bool vert_switched_any;
+    do{
+        vert_switched_any = false;
+
+        vert_switched_any |= optimize_min(s);
+        auto probs = probabilities(s);
+        
+        iterations_to_convergence++;
+        vert_switched_any = false;
+        for(int cur_v: max_vertices){
+            
+            int cur_edge = outgoing_edge[cur_v][s[cur_v]];
+            int other_edge = outgoing_edge[cur_v][!s[cur_v]];
+
+            double p_cur = probs[cur_edge];
+            double p_other = probs[other_edge];
+
+            double delta = p_other - p_cur;
+            delta = abs(delta);
+
+            if(delta > tolerance && p_other > p_cur){
+                // NOTICE: random()%2 has 1/2 of selecting current edge.
+                vert_switched_any = true;
+                s[cur_v] = !s[cur_v]; //switch edge.
+            }
+        }
 
     }while(vert_switched_any);
     //std::cout << "its: " << iterations_to_convergence << "  ave player loops: " << player_loops / (double)(2*iterations_to_convergence) << std::endl;
@@ -598,8 +701,7 @@ int SSG::optimize_min_iters(std::vector<bool> &s, std::vector<int> &count){
     return optimize_min_iters(s,p,count);
 }
 
-int SSG::optimize_min_iters(std::vector<bool> &s, std::vector<double> probs, std::vector<int> &count){
-
+int SSG::optimize_min_iters(std::vector<bool> &s, std::vector<double> probs, std::vector<int> &count){  
         bool min_switched_edge;
         //bool ever_switched = false;
         int min_verts_switched = 0;
@@ -632,284 +734,325 @@ int SSG::optimize_min_iters(std::vector<bool> &s, std::vector<double> probs, std
     return min_verts_switched;
 }
 
+std::vector<bool> inverse_strategy(std::vector<bool> &s){
+    for(int i = 0; i<s.size(); i++){
+        s[i] = !s[i];
+    }
+    return s;
+}
+
+
+int SSG::hoffman_karp_n_iterations_inverse(){
+    std::vector<bool> s = hoffman_karp();
+    inverse_strategy(s);
+    return hoffman_karp_n_iterations(s);
+}
+
+
 int SSG::hoffman_karp_n_iterations(){
     std::vector<bool> s(n,0);
     return hoffman_karp_n_iterations(s);
 }
 int SSG::hoffman_karp_n_iterations(std::vector<bool> s){
-    //int max_verts_switched = 0;
     int total_switches = 0;
-    std::vector<int> switch_count(n,0);
-    
+
     bool vert_switched_any;
     do{
         vert_switched_any = false;
 
-        bool max_has_switchable_edge = false; //TODO
-        bool max_vert_was_switched = false;     //TODO remove these variables. they do nothing.
         auto probs = probabilities(s);
-        do{ 
-            vert_switched_any = false;
-            for(int cur_v: max_vertices){
-                
-                int cur_edge = outgoing_edge[cur_v][s[cur_v]];
-                int other_edge = outgoing_edge[cur_v][!s[cur_v]];
-
-                double p_cur = probs[cur_edge];
-                double p_other = probs[other_edge];
-
-                //std::cout << p_cur << '\t' << p_other << std::endl;
-
-                double delta = p_other - p_cur;
-                delta = abs(delta);
-
-                if(delta > tolerance && p_other > p_cur){
-                    max_has_switchable_edge = true; 
-                    // NOTICE: random()%2 has 1/2 of selecting current edge.
-                        vert_switched_any = true;
-                        max_vert_was_switched = true;
-                        s[cur_v] = !s[cur_v]; //switch edge.
-                        switch_count[cur_v] += 1;
-                        //std::cout << "x: " << s << std::endl;
-                }
-            }
-        }while(max_has_switchable_edge && !max_vert_was_switched);
-        total_switches++;
-        //std::cout << "x: " << probabilities(s) << std::endl;
-
-        int min_verts_switched = optimize_min_iters(s,switch_count);
-
-        bool any_min_switched = min_verts_switched > (int)min_vertices.size();
+        bool any_min_switched = optimize_min(s); //improve MIN
         vert_switched_any |= any_min_switched;
-        probs = probabilities(s);
 
-        //std::cout << "n: ";
-        //std::cout << probs << std::endl;
+        probs = probabilities(s);
+        //Improve MAX
+        for(int cur_v: max_vertices){
+            
+            int cur_edge = outgoing_edge[cur_v][s[cur_v]];
+            int other_edge = outgoing_edge[cur_v][!s[cur_v]];
+
+            double p_cur = probs[cur_edge];
+            double p_other = probs[other_edge];
+
+            double delta = p_other - p_cur;
+            delta = abs(delta);
+
+            if(delta > tolerance && p_other > p_cur){
+                    vert_switched_any = true;
+                    s[cur_v] = !s[cur_v]; //switch edge.
+            }
+        }
+        total_switches++;
 
     }while(vert_switched_any);
 
-    /*
-    //std::cout << "its: " << iterations_to_convergence << "  ave player loops: " << player_loops / (double)(2*iterations_to_convergence) << std::endl;
-    std:: cout << "n:  ";
-    for(int i = 0; i<n; i++){
-        std::cout << i%10 << "   ";
-    } std::cout << std::endl;
-    std::cout << "s: " << switch_count << std::endl;
-    std::cout << "t:  ";
-    for(int i = 0; i<n; i++){
-        std::cout << (int)type[i] << "   ";
-    } std::cout << std::endl;
-    */
-    
+    return total_switches;
+}
+
+int SSG::hoffman_karp_n_iterations_dermans(){
+    std::vector<bool> s(n,0);
+    return hoffman_karp_n_iterations_dermans(s);
+}
+int SSG::hoffman_karp_n_iterations_dermans(std::vector<bool> s){
+
+    optimize_min(s);
+    optimize_max(s);
+
+    int total_switches = 0;
+
+    bool vert_switched_any;
+    do{
+        vert_switched_any = false;
+
+        auto probs = probabilities(s);
+        bool any_min_switched = optimize_min(s); //improve MIN
+        vert_switched_any |= any_min_switched;
+
+        probs = probabilities(s);
+        //Improve MAX
+        for(int cur_v: max_vertices){
+            
+            int cur_edge = outgoing_edge[cur_v][s[cur_v]];
+            int other_edge = outgoing_edge[cur_v][!s[cur_v]];
+
+            double p_cur = probs[cur_edge];
+            double p_other = probs[other_edge];
+
+            double delta = p_other - p_cur;
+            delta = abs(delta);
+
+            if(delta > tolerance && p_other > p_cur){
+                    vert_switched_any = true;
+                    s[cur_v] = !s[cur_v]; //switch edge.
+            }
+        }
+        total_switches++;
+
+    }while(vert_switched_any);
+
     return total_switches;
 }
 
 
-int SSG::hoffman_karp_n_iterations_strat(){
-    std::vector<bool> s(n,0);
-    return hoffman_karp_n_iterations_strat(s);
+Eigen::MatrixXi compute_switch_matrix(std::vector<std::vector<double>> probs){
+    if(!probs.size()){
+        return Eigen::MatrixXi();
+    }
+    int n = probs[0].size();
+    Eigen::MatrixXi times_changed = Eigen::MatrixXi::Zero(n-2, n-2);
+
+    for(uint i = 1; i<probs.size(); i++){
+         for(int r = 0; r<n-2; r++){
+            for(int c = r+1; c<n-2; c++){
+                double old_a = probs[i-1][c]; //index(a) > index(b)
+                double old_b = probs[i-1][r];
+                bool old_order = abs(old_a-old_b) > SSG::default_tolerance && old_a > old_b;
+
+                double a = probs[i][c]; //index(a) > index(b)
+                double b = probs[i][r];
+                bool new_order = abs(a-b) > SSG::default_tolerance && a > b;
+                if(new_order != old_order){
+                    times_changed(r,c) += 1;
+                    times_changed(c,r) += 1;
+                }
+            }
+        }
+    }
+    return times_changed;
 }
-int SSG::hoffman_karp_n_iterations_strat(std::vector<bool> s){
-    //int max_verts_switched = 0;
+
+
+
+int SSG::hoffman_karp_n_iterations_print(){
+    std::vector<bool> s(n,0);
+    return hoffman_karp_n_iterations_print(s);
+}
+int SSG::hoffman_karp_n_iterations_print(std::vector<bool> s){
     int total_switches = 0;
     std::vector<int> switch_count(n,0);
 
-    typedef std::tuple<int, double> pair;
-
-    std::vector<std::vector<pair>> n_pairs(0); //before min makes improvements
-    std::vector<std::vector<pair>> x_pairs(0); //before max makes improvesments
-
-    std::vector<double> x_contig(0);
-
-    struct {
-        bool operator()(pair a, pair b) const { 
-                double aa = std::get<1>(a);
-                double bb = std::get<1>(b);
-                double delta = abs(aa - bb);    
-                return  delta > .0075 && aa > bb; //tolerance
-            }
-    } pair_comp;
+    std::vector<std::vector<double>> n_probs(0); //before min makes improvements
+    std::vector<std::vector<double>> x_probs(0); //before max makes improvesments
     
     bool vert_switched_any;
     do{
         vert_switched_any = false;
 
-        bool max_has_switchable_edge = false; //TODO
-        bool max_vert_was_switched = false;     //TODO remove these variables. they do nothing.
         auto probs = probabilities(s);
+        n_probs.push_back(probs);
 
-        std::vector<pair> cur_pair(0);
-        for(int i = 0; i<probs.size()-2; i++){
-            cur_pair.push_back(pair(i, probs[i]));
-        } std::stable_sort(cur_pair.begin(), cur_pair.end(), pair_comp);
-        x_pairs.push_back(cur_pair);
-
-        std::cout << "x: " << probs << " \tx: " << s << std::endl;
-
-        do{ 
-            vert_switched_any = false;
-            for(int cur_v: max_vertices){
-                
-                int cur_edge = outgoing_edge[cur_v][s[cur_v]];
-                int other_edge = outgoing_edge[cur_v][!s[cur_v]];
-
-                double p_cur = probs[cur_edge];
-                double p_other = probs[other_edge];
-
-                double delta = p_other - p_cur;
-                delta = abs(delta);
-
-                if(delta > tolerance && p_other > p_cur){
-                    max_has_switchable_edge = true; 
-                        vert_switched_any = true;
-                        max_vert_was_switched = true;
-                        s[cur_v] = !s[cur_v]; //switch edge.
-                        switch_count[cur_v] += 1;
-                }
-            }
-        }while(max_has_switchable_edge && !max_vert_was_switched);
-        total_switches++;
-
-
-        //std::cout << "n: " << probs << " \tn: " << s << std::endl;
-        int min_verts_switched = optimize_min_iters(s,switch_count);
-
+        std::cout << "n: " << probs << " \tn: " << s << std::endl;
+        int min_verts_switched = optimize_min_iters(s,switch_count); //improve MIN
         bool any_min_switched = min_verts_switched > (int)min_vertices.size();
         vert_switched_any |= any_min_switched;
+
+
         probs = probabilities(s);
+        x_probs.push_back(probs);
+        std::cout << "x: " << probs << " \tx: " << s << std::endl;
+        //Improve MAX
+        for(int cur_v: max_vertices){
+            
+            int cur_edge = outgoing_edge[cur_v][s[cur_v]];
+            int other_edge = outgoing_edge[cur_v][!s[cur_v]];
 
+            double p_cur = probs[cur_edge];
+            double p_other = probs[other_edge];
 
-        std::vector<pair> cur_pair_n(0);
-        for(int i = 0; i<probs.size()-2; i++){
-            cur_pair_n.push_back(pair(i, probs[i]));
-        } std::stable_sort(cur_pair_n.begin(), cur_pair_n.end(), pair_comp);
-        n_pairs.push_back(cur_pair_n);
+            double delta = p_other - p_cur;
+            delta = abs(delta);
+
+            if(delta > tolerance && p_other > p_cur){
+                    vert_switched_any = true;
+                    s[cur_v] = !s[cur_v]; //switch edge.
+                    switch_count[cur_v] += 1;
+            }
+        }
+        total_switches++;
 
     }while(vert_switched_any);
     
     const char* sp = "      ";
-    const char* type_c = " ANXSS";
+    const char* type_c = " SNAXS";
+    std:: cout << "v:  ";   for(int i = 0; i<n; i++){std::cout << i%10 << sp;} 
+    std:: cout << " \tv: "; for(int i = 0; i<n; i++){std::cout << i%10 << " ";}                 std::cout << std::endl;
+    std::cout << "s:  ";    for(int i = 0; i<n; i++){std::cout << switch_count[i] << sp;}
+    std::cout << " \ts: ";  for(int i = 0; i<n; i++){std::cout << switch_count[i] << " ";}      std::cout << std::endl;
+    std::cout << "t:  ";    for(int i = 0; i<n; i++){std::cout << type_c[(int)type[i]] << sp; } 
+    std::cout << " \tt: ";  for(int i = 0; i<n; i++){std::cout << type_c[(int)type[i]] << " ";} std::cout << std::endl;
+    std::cout << "\n\n";
 
 
+    //keep track of how many times x&n switch each vertex.
 
-    std:: cout << "v:  ";
-    for(int i = 0; i<n; i++){
-        std::cout << i%10 << sp;
-    } 
-    std:: cout << " \tv: ";
-    for(int i = 0; i<n; i++){
-        std::cout << i%10 << " ";
-    } std::cout << std::endl;
+    auto x_switches = compute_switch_matrix(x_probs);
+    auto n_switches = compute_switch_matrix(n_probs);
 
-    std::cout << "s:  ";
-    for(int i = 0; i<n; i++){
-        std::cout << switch_count[i] << sp;
-    }
-    std::cout << " \ts: ";
-    for(int i = 0; i<n; i++){
-        std::cout << switch_count[i] << " ";
-    } std::cout << std::endl;
+    
+    std::cout << "n:\n";
+    std::cout << n_switches << "\n\n";
+    std::cout << "x:\n";
+    std::cout << x_switches << "\n\n";
 
-    std::cout << "t:  ";
-    for(int i = 0; i<n; i++){
-        std::cout << type_c[(int)type[i]] << sp;
-    } 
-    std::cout << " \tt: ";
-    for(int i = 0; i<n; i++){
-        std::cout << type_c[(int)type[i]] << " ";
-    } std::cout << std::endl;
-
-
-    std::cout << "\n\n\n";
-
-    std::vector<std::vector<int>> sorted_index(0);
-
-    for(auto cur_p: x_pairs){
-        std::vector<int> loc(n, 0);
-        for(int i = 0; i<cur_p.size();i++){
-            int e = std::get<0>(cur_p[i]);
-            loc[e] = i;
-        }
-        sorted_index.push_back(loc);
-    }
-
-
-    Eigen::MatrixXd x(sorted_index.size(), n-2);
-
-
-    std::cout << "vertices sorted by probability: \n";
-    for(int r = 0; r<sorted_index.size(); r++){
-        for(int c = 0; c<n-2; c++){
-            x(r,c) = sorted_index[r][c];
-            std::cout << (int)x(r,c) << '\t';
-        }
-        std::cout << std::endl;
-    }std::cout << "\n\n";
-
-    Eigen::MatrixXd centered = x.rowwise() - x.colwise().mean();
-    Eigen::MatrixXd cov = (centered.adjoint() * centered) / double(x.rows() - 1);
-
-    for(int c = 0; c<cov.cols(); c++){
-        double var = sqrt(cov(c,c));
-        cov.col(c) /= var;
-        cov.row(c) /= var;
-    }
-
-    std::cout << "correlation coeff: \n";
-    std::cout << cov << std::endl;
-
-
-    Eigen::MatrixXi times_changed = Eigen::MatrixXi::Zero(n-2, n-2);
-    Eigen::MatrixXi prev_order = Eigen::MatrixXi::Zero(n-2, n-2);
-
-    for(int r = 0; r<n-2; r++){
-        for(int c = r+1; c<n-2; c++){
-            prev_order(r,c) = prev_order(c,r) = sorted_index[0][c] > sorted_index[0][r];
-        }
-    }
-
-    for(int i = 1; i<sorted_index.size(); i++){
-         for(int r = 0; r<n-2; r++){
-            for(int c = r+1; c<n-2; c++){
-                bool new_order = sorted_index[i][c] > sorted_index[i][r];
-                if(new_order != prev_order(c,r)){
-
-                    times_changed(r,c) += 1;
-                    times_changed(c,r) += 1;
-                    prev_order(r,c) = prev_order(c,r) = new_order;
-                }
-            }
-        }
-    }
-
-    std::cout << times_changed << std::endl;
-
-    //sort each row by probability. (tuple with orig index)
-    //store a matrix that contains the location each index took in the sorted array
-    //find covariance on 
-
-
+    std::cout << switch_count<< std::endl;
+    for(int i = 0; i<n; i++){std::cout << type_c[(int)type[i]] << " ";} std::cout << std::endl;
+    for(int i = 0; i<n; i++){std::cout << i%10 << " ";}                 std::cout << std::endl;
+    std::cout << std::endl;
     return total_switches;
 }
 
 
+std::tuple<Eigen::MatrixXi, Eigen::MatrixXi> SSG::switch_matrices(){
+    return switch_matrices(std::vector<bool>(n,0));
+}
+std::tuple<Eigen::MatrixXi, Eigen::MatrixXi> SSG::switch_matrices(std::vector<bool> s){
+    int total_switches = 0;
+    std::vector<int> switch_count(n,0);
+
+    std::vector<std::vector<double>> n_probs(0); //before min makes improvements
+    std::vector<std::vector<double>> x_probs(0); //before max makes improvesments
+    
+    bool vert_switched_any;
+    do{
+        vert_switched_any = false;
+
+        auto probs = probabilities(s);
+        n_probs.push_back(probs);
+
+        std::cout << "n: " << probs << " \tn: " << s << std::endl;
+        int min_verts_switched = optimize_min_iters(s,switch_count); //improve MIN
+        bool any_min_switched = min_verts_switched > (int)min_vertices.size();
+        vert_switched_any |= any_min_switched;
 
 
+        probs = probabilities(s);
+        x_probs.push_back(probs);
+        std::cout << "x: " << probs << " \tx: " << s << std::endl;
+        //Improve MAX
+        for(int cur_v: max_vertices){
+            
+            int cur_edge = outgoing_edge[cur_v][s[cur_v]];
+            int other_edge = outgoing_edge[cur_v][!s[cur_v]];
+
+            double p_cur = probs[cur_edge];
+            double p_other = probs[other_edge];
+
+            double delta = p_other - p_cur;
+            delta = abs(delta);
+
+            if(delta > tolerance && p_other > p_cur){
+                    vert_switched_any = true;
+                    s[cur_v] = !s[cur_v]; //switch edge.
+                    switch_count[cur_v] += 1;
+            }
+        }
+        total_switches++;
+    }while(vert_switched_any);
+
+    auto x_switches = compute_switch_matrix(x_probs);
+    auto n_switches = compute_switch_matrix(n_probs);
+
+    return std::tuple<Eigen::MatrixXi, Eigen::MatrixXi>(n_switches, x_switches);
+}
 
 
+std::tuple<Eigen::MatrixXi, Eigen::MatrixXi> SSG::final_switch_matrices(){
+    return final_switch_matrices(std::vector<bool>(n,0));
+}
+
+std::tuple<Eigen::MatrixXi, Eigen::MatrixXi> SSG::final_switch_matrices(std::vector<bool> s){
+     int total_switches = 0;
+    std::vector<int> switch_count(n,0);
+
+    std::vector<std::vector<double>> n_probs(0); //before min makes improvements
+    std::vector<std::vector<double>> x_probs(0); //before max makes improvesments
+    
+    bool vert_switched_any;
+    do{
+        vert_switched_any = false;
+
+        auto probs = probabilities(s);
+        n_probs.push_back(probs);
+
+        std::cout << "n: " << probs << " \tn: " << s << std::endl;
+        int min_verts_switched = optimize_min_iters(s,switch_count); //improve MIN
+        bool any_min_switched = min_verts_switched > (int)min_vertices.size();
+        vert_switched_any |= any_min_switched;
 
 
+        probs = probabilities(s);
+        x_probs.push_back(probs);
+        std::cout << "x: " << probs << " \tx: " << s << std::endl;
+        //Improve MAX
+        for(int cur_v: max_vertices){
+            
+            int cur_edge = outgoing_edge[cur_v][s[cur_v]];
+            int other_edge = outgoing_edge[cur_v][!s[cur_v]];
 
+            double p_cur = probs[cur_edge];
+            double p_other = probs[other_edge];
 
+            double delta = p_other - p_cur;
+            delta = abs(delta);
 
+            if(delta > tolerance && p_other > p_cur){
+                    vert_switched_any = true;
+                    s[cur_v] = !s[cur_v]; //switch edge.
+                    switch_count[cur_v] += 1;
+            }
+        }
+        total_switches++;
+    }while(vert_switched_any);
+    
 
+    std::vector<std::vector<double>> last_x(x_probs.end()-2, x_probs.end());
+    std::vector<std::vector<double>> last_n(n_probs.end()-2, n_probs.end());
 
+    auto x_switches = compute_switch_matrix(last_x);
+    auto n_switches = compute_switch_matrix(last_n);
 
-
-
-
-
-
+    return std::tuple<Eigen::MatrixXi, Eigen::MatrixXi>(n_switches, x_switches);
+}
 
 
 
@@ -991,7 +1134,6 @@ std::vector<bool> SSG::ludwig(){
 std::vector<bool> SSG::ludwig(const std::vector<bool> &s){
     std::vector<bool> selected(n,0);
     return s;
-    return s;
 }
 
 std::vector<bool> SSG::ludwig_iterative(){
@@ -1063,8 +1205,10 @@ SSG SSG::random_game_loopless(int n){
     game.set_vertex(n-2, vertex_type::sink_min, n-2, n-2);
     game.set_vertex(n-1, vertex_type::sink_max, n-1, n-1);
 
+    const std::vector<vertex_type> v_type= {vertex_type::min, vertex_type::ave, vertex_type::max};
+
     for(int i = n-3; i>= 0; i--){
-        vertex_type type = (vertex_type)(rand()%3+1);
+        vertex_type type = v_type[rand()%3];
         int j = random()%(n - i) + i;
         int k = random()%(n - i) + i;
 
@@ -1083,12 +1227,93 @@ SSG SSG::random_game(int n){
     game.set_vertex(n-2, vertex_type::sink_min, n-2, n-2);
     game.set_vertex(n-1, vertex_type::sink_max, n-1, n-1);
 
+    const std::vector<vertex_type> v_type= {vertex_type::min, vertex_type::ave, vertex_type::max};
+
     for(int i = n-3; i>= 0; i--){
-        vertex_type type = (vertex_type)(rand()%3+1);
+        vertex_type type = v_type[rand()%3];
         int j = random()%n;
         int k = random()%n;
 
         game.set_vertex(i, type, j, k);
+    }
+
+    return game;
+}
+
+SSG SSG::random_nontrivial_game(int n){
+    SSG game(n);
+
+    if(n<2)
+        return game;
+
+    game.set_vertex(n-2, vertex_type::sink_min, n-2, n-2);
+    game.set_vertex(n-1, vertex_type::sink_max, n-1, n-1);
+
+    const std::vector<vertex_type> v_type= {vertex_type::min, vertex_type::ave, vertex_type::max};
+
+    std::vector<int> nax(3,0); //find how many min, ave, max verts there will be.
+    for(int i = 0; i<n-2; i++){
+        nax[random()%3]++;
+    }
+
+    nax[1] += nax[0];
+    nax[2] += nax[1];
+
+    int k = 0;
+
+    for(int v = 0; v< n-2; v++){
+
+        while(v >= nax[k]){
+            k++;
+        }
+
+        vertex_type type = v_type[k];
+
+        int e1;
+        int e2;
+
+        std::set<int> exclude;
+        exclude.insert(v);
+
+        switch(type){
+            case ave:
+            {
+                for(int i_v: game.incoming_edges[v]){
+                    if(game.type[i_v] == vertex_type::ave){
+                        exclude.insert(i_v);
+                    }
+                }
+                e1 = random_in_range_exclude(0, n, exclude);
+                exclude.insert(e1);
+                e2 = random_in_range_exclude(0, n, exclude);
+                break;
+            }
+            case min:
+            {
+                for(int i_v: game.incoming_edges[v]){
+                    if(game.type[i_v] == vertex_type::min || game.type[i_v] == vertex_type::max){
+                        exclude.insert(i_v);
+                    }
+                }
+                e1 = random_in_range_exclude(0, n-2, exclude);
+                exclude.insert(e1);
+                e2 = random_in_range_exclude(0, n-2, exclude);
+                break;
+            }
+            case max:
+            {
+                for(int i_v: game.incoming_edges[v]){
+                    if(game.type[i_v] == vertex_type::max || game.type[i_v] == vertex_type::min){
+                        exclude.insert(i_v);
+                    }
+                }
+                e1 = random_in_range_exclude(0, n-2, exclude);
+                exclude.insert(e1);
+                e2 = random_in_range_exclude(0, n-2, exclude);
+                break;
+            }
+        }
+        game.set_vertex(v, type, e1, e2);
     }
 
     return game;
@@ -1114,82 +1339,13 @@ SSG SSG::random_game_equal_split(int n){
     }
 
     for(int i = n-3 - p_verts; i> n-3 - (p_verts * 2); i--){
-        vertex_type type = vertex_type::min;
-        int j = random()%n;
-        int k = random()%n;
-
-        game.set_vertex(i, type, j, k);
-    }
-    for(int i = n-3 - (p_verts*2); i>= 0; i--){
         vertex_type type = vertex_type::ave;
         int j = random()%n;
         int k = random()%n;
 
         game.set_vertex(i, type, j, k);
     }
-
-    return game;
-}
-
-SSG SSG::random_game_mod(int n){
-    SSG game(n);
-
-    if(n<2)
-        return game;
-
-    game.set_vertex(n-2, vertex_type::sink_min, n-2, n-2);
-    game.set_vertex(n-1, vertex_type::sink_max, n-1, n-1);
-
-
-    std::vector<vertex_type> type_vec(0);
-    for(int i = n-3; i>=0; i--){
-        vertex_type type = (vertex_type)((i*3)/(n-2) + 1);
-        type_vec.push_back(type);
-    }
-
-    std::shuffle(std::begin(type_vec), std::end(type_vec), rng);
-
-    for(int i = n-3; i>=0; i--){
-        vertex_type type = type_vec[i];
-        int j = random()%n;
-        int k = random()%n;
-
-        game.set_vertex(i, type, j, k);
-    }
-
-    return game;
-}
-
-SSG SSG::random_game_max(int n){
-    SSG game(n);
-
-    if(n<2)
-        return game;
-
-    game.set_vertex(n-2, vertex_type::sink_min, n-2, n-2);
-    game.set_vertex(n-1, vertex_type::sink_max, n-1, n-1);
-
-    for(int i = n-3; i>=0; i--){
-        vertex_type type = vertex_type::max;
-        int j = random()%n;
-        int k = random()%n;
-
-        game.set_vertex(i, type, j, k);
-    }
-
-    return game;
-}
-
-SSG SSG::random_game_min(int n){
-    SSG game(n);
-
-    if(n<2)
-        return game;
-
-    game.set_vertex(n-2, vertex_type::sink_min, n-2, n-2);
-    game.set_vertex(n-1, vertex_type::sink_max, n-1, n-1);
-
-    for(int i = n-3; i>=0; i--){
+    for(int i = n-3 - (p_verts*2); i>= 0; i--){
         vertex_type type = vertex_type::min;
         int j = random()%n;
         int k = random()%n;
@@ -1209,8 +1365,9 @@ SSG SSG::random_game_n_max(int n_max, int n){
     game.set_vertex(n-2, vertex_type::sink_min, n-2, n-2);
     game.set_vertex(n-1, vertex_type::sink_max, n-1, n-1); 
 
+    const std::vector<vertex_type> v_type= {vertex_type::min, vertex_type::ave, vertex_type::max};
     for(int i = n-3; i>=0; i--){
-        vertex_type type = (vertex_type)((random()%2) +1);
+        vertex_type type = v_type[random()%2];
         int j = random()%n;
         int k = random()%n;
 
@@ -1253,32 +1410,6 @@ SSG SSG::hard_game_max(int n){
     return game;
 }
 
-
-SSG SSG::random_game_one_ave(int n){
-    SSG game(n);
-
-    if(n<2)
-        return game;
-
-    game.set_vertex(n-2, vertex_type::sink_min, n-2, n-2);
-    game.set_vertex(n-1, vertex_type::sink_max, n-1, n-1);
-
-    int ave_vert = random() % (n-2);
-
-    for(int i = n-3; i>=0; i--){
-        vertex_type type = (vertex_type)((random()%2)+2);
-        if(i == ave_vert){
-            type = vertex_type::ave;
-        }
-        int j = random()%n;
-        int k = random()%n;
-
-        game.set_vertex(i, type, j, k);
-    }
-
-    return game;
-}
-
 std::vector<bool> SSG::random_strategy(int n){
     std::vector<bool> s(n,0);
 
@@ -1296,6 +1427,46 @@ SSG SSG::read_game(std::string file_name){
     file.close();
     return g;
 }
+
+
+
+
+
+SSG SSG::read_game_expand(std::string file_name, int extra_vertices){
+    std::ifstream file;
+    file.open(file_name);
+    SSG g = SSG::read_game_file_expand(file, extra_vertices);
+    file.close();
+    return g;
+}
+
+
+SSG SSG::read_game_file_expand(std::ifstream &file, int extra_vertices){
+    std::string cur_line;
+
+    std::getline(file, cur_line);
+
+    int n = stoi(cur_line);
+    SSG game(n+extra_vertices);
+
+    for(int i = 0; i<n; i++){
+        std::getline(file, cur_line);
+
+        int v, type, e1, e2;
+        std::istringstream iss(cur_line);
+        iss >> v >> type >> e1 >> e2;
+
+        #define v_macro(x) x = x>n-3? x+extra_vertices : x
+
+        v_macro(v);
+        v_macro(e1);
+        v_macro(e2);
+
+        game.set_vertex(v,(vertex_type)type,e1,e2);
+    }
+    return game;
+}
+
 
 SSG SSG::read_game_file(std::ifstream &file){
     std::string cur_line;
@@ -1361,7 +1532,7 @@ bool next_combination_most(SSG &g, int v){
 
     type = e1_overflow? (vertex_type)(((int)type)+1) : type;
 
-    type = type_overflow ? vertex_type::ave : type;
+    type = type_overflow ? vertex_type::min : type;
 
     //cout << v << " -> "<< e1 << " " << e2 << endl;
     g.force_vertex(v, type, e1, e2);
@@ -1372,7 +1543,7 @@ bool next_combination_most(SSG &g, int v){
             return next_combination_most(g,v);
     }
 
-    if(!type_overflow && type == vertex_type::ave){
+    if(!type_overflow && type == vertex_type::min){
         if(e1 == e2 || e1 == v || e2 == v)
             return next_combination_most(g,v);
     }
@@ -1406,6 +1577,7 @@ SSG SSG::hardest_possible_game(int n){
 
     return max_gs.back();
 }
+
 
 
 std::ostream& operator<<(std::ostream& os, const SSG &game)
@@ -1455,8 +1627,8 @@ void SSG::set_edges(int vertex, int e1, int e2){
     outgoing_edge[vertex][0] = e1;
     outgoing_edge[vertex][1] = e2;
 
-    incoming_edges[e1].emplace_back(vertex);
-    incoming_edges[e2].emplace_back(vertex);
+    incoming_edges[e1].insert(vertex);
+    incoming_edges[e2].insert(vertex);
 }
 
 void SSG::force_edges(int vertex, int e1, int e2){
@@ -1467,13 +1639,22 @@ void SSG::force_edges(int vertex, int e1, int e2){
     }
 
     //out of range for vertices
-    if(e1 >= n || e1 < 0 || e2 >= n || e2 < 0){
+    if(e2 >= n || e1 < 0 || e1 >= n || e2 < 0){
         std::cerr << "WARNING SSG::set_edges e1 or e2 out of bounds. e1: "  << e1 << "\te2: " << e2 << std::endl;
         return;
     }
 
+    int old_e1 = outgoing_edge[vertex][0];
+    int old_e2 = outgoing_edge[vertex][0];
+
+    incoming_edges[old_e1].erase(vertex);
+    incoming_edges[old_e2].erase(vertex);
+
     outgoing_edge[vertex][0] = e1;
     outgoing_edge[vertex][1] = e2;
+
+    incoming_edges[e1].insert(vertex);
+    incoming_edges[e2].insert(vertex);
 }
 
 void SSG::set_vertex(int vertex, vertex_type type, int e1, int e2){

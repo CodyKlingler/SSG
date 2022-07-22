@@ -9,7 +9,7 @@
 
 //#define SSG_TEST_PRINT
 
-std::vector<std::vector<bool>(SSG::*)(std::vector<bool>)> SSG_algorithms = {&SSG::ludwig_iterative,  &SSG::hoffman_karp, &SSG::tripathi_hoffman_karp };
+std::vector<std::vector<bool>(SSG::*)(void)> SSG_algorithms = {&SSG::hoffman_karp,  &SSG::hoffman_karp2};t//,&SSG::hoffman_karp2_dermans, &SSG::tripathi_hoffman_karp, &SSG::ludwig_iterative};
 std::vector<const char*> SSG_algorithm_names = {"hoff-karp", "ludwig"};
 
 std::vector<std::vector<bool>(SSG::*)(std::vector<bool>)> unused_algorithms = {&SSG::incorrect_hoffman_karp};
@@ -197,19 +197,30 @@ void test_randomized_hoffman(int n_tests, int n_strats_per_game, int n_vertices)
 }
 
 #include <bits/stdc++.h>
-void benchmark_SSG(int n_games, int n_strats_per_game, int n_vertices){
-    std::cout << n_vertices;
 
-    std::vector<SSG> games(0,SSG::random_game_mod(n_vertices));
-    std::vector<std::vector<bool>> random_strategies(n_strats_per_game, SSG::random_strategy(n_vertices));
+void benchmark_SSG(int n_games, int n_vertices){
+    std::vector<SSG> games;
+    for(int i = 0; i<n_games; i++){
+        games.push_back(SSG::random_game(n_vertices));
+    }
+    benchmark_SSG(games);
+}
+
+//assumes each game passed in has the same number of verts
+void benchmark_SSG(std::vector<SSG> games){
+
+    int n_games = games.size();
+    int n_vertices = games[0].n;
+
+    std::cout << n_vertices;
 
     for(auto cur_algo: SSG_algorithms){
         std::vector<double> times(n_games);
         for(SSG cur_game: games){
             auto start = std::chrono::system_clock::now();
-            for(std::vector<bool> cur_strat: random_strategies){
-                std::vector<bool> opt = (cur_game.*cur_algo)(cur_strat);
-            }
+            //for(std::vector<bool> cur_strat: random_strategies){      //TODO: remove. 
+                std::vector<bool> opt = (cur_game.*cur_algo)();               // <== because there is no strat passed here.
+            //}
             auto end = std::chrono::system_clock::now();
             std::chrono::duration<double> elapsed_seconds = end - start;
             times.push_back(elapsed_seconds.count()*1000);
@@ -225,48 +236,46 @@ bool test_correctness(int n_games, int n_strats_per_game, int n_vertices){
     
     int n_games_written = 0;
     bool strats_written = false;
-    bool bad_strat_ever_found = false;
+    bool bad_game_ever_found = false;
 
-    std::vector<SSG> games(n_games, SSG::random_game(n_vertices));
-    std::vector<std::vector<bool>> random_strategies(n_strats_per_game, SSG::random_strategy(n_vertices));
+    std::vector<SSG> games;
+    for(int i = 0; i<n_games; i++){
+        games.push_back(SSG::random_game(n_vertices));
+    }
+
     for(SSG cur_game: games){
             //algo  //strategy       //vertex_p  
-        std::vector<std::vector<std::vector<double>>> opt_probs;
+        std::vector<std::vector<double>> opt_probs;
         for(auto cur_algo: SSG_algorithms){
-            std::vector<std::vector<double>> cur_algo_probs;
-            for(std::vector<bool> cur_strat: random_strategies){
-                std::vector<bool> opt = (cur_game.*cur_algo)(cur_strat);
-                auto cur_p = cur_game.exact_probabilities(opt);
-                cur_algo_probs.emplace_back(cur_p);
-            }
-            opt_probs.emplace_back(cur_algo_probs);
+            std::vector<bool> opt = (cur_game.*cur_algo)();
+            auto cur_p = cur_game.exact_probabilities(opt);
+            opt_probs.emplace_back(cur_p);
         }
 
         const double tolerance = games[0].tolerance;
 
-        bool bad_strat_found = false;
+        bool bad_game_found = false;
 
-        for(uint v = 0; v<opt_probs[0][0].size(); v++){
+        for(uint v = 0; v<opt_probs[0].size(); v++){
             double max_prob_v = -999;
             double min_prob_v = 999;
             for(uint a = 0; a<opt_probs.size(); a++){
                 double max_prob_s = -999;
                 double min_prob_s = 999;
-                for(uint s = 0; s<opt_probs[0].size(); s++){
-                    double cur_p = opt_probs[a][s][v];
+                double cur_p = opt_probs[a][v];
 
-                    max_prob_s = cur_p>max_prob_s? cur_p: max_prob_s;
-                    max_prob_v = cur_p>max_prob_v? cur_p: max_prob_v;
-                    
-                    min_prob_s = cur_p<min_prob_s? cur_p: min_prob_s;
-                    min_prob_v = cur_p<min_prob_v? cur_p: min_prob_v;
-                }
+                max_prob_s = cur_p>max_prob_s? cur_p: max_prob_s;
+                max_prob_v = cur_p>max_prob_v? cur_p: max_prob_v;
+                
+                min_prob_s = cur_p<min_prob_s? cur_p: min_prob_s;
+                min_prob_v = cur_p<min_prob_v? cur_p: min_prob_v;
+                
 
                 double diff_s = abs(max_prob_s - min_prob_s);
                 if(diff_s > tolerance){
                    // std::cout << "correctness test for " << SSG_algorithm_names[a] << " produces inconsistent strategies" << std::endl;
-                    bad_strat_found = true;
-                    bad_strat_ever_found = true;
+                    bad_game_found = true;
+                    bad_game_ever_found = true;
                     break;
                 }
             }
@@ -275,34 +284,24 @@ bool test_correctness(int n_games, int n_strats_per_game, int n_vertices){
             double diff_v = abs(max_prob_v - min_prob_v);
             if(diff_v > tolerance){
                //std::cout << "correctness test produced inconsistent results between algorithms" << std::endl;
-                bad_strat_found = true;
-                bad_strat_ever_found = true;
+                bad_game_found = true;
+                bad_game_ever_found = true;
                 break;
             }
         }
         // write strategies to file. 
         // write game to file
 
-        if(bad_strat_found){
-
+        if(bad_game_found){
             std::ofstream myfile;
 
-            if(!strats_written){
-                for(int i = 0; i<n_strats_per_game; i++){
-                    std::string num_str = std::to_string(i);
-                    myfile.open ("folder/strat_" + num_str + ".txt");
-                    myfile << random_strategies[i];
-                    myfile.close();
-                }
-            }
             std::string num_str = std::to_string(n_games_written++);
             myfile.open("folder/game_" + num_str + ".txt");
             myfile << cur_game;
             myfile.close();
         }
     }   
-
-    return !bad_strat_ever_found;
+    return !bad_game_ever_found;
 }
 
 

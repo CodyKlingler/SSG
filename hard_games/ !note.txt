@@ -1,1 +1,0 @@
-These games have their score found by number of checks on both the min and max vertices.

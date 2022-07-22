@@ -1,4 +1,3 @@
-#pragma once
 /* Copyright 2022, Gurobi Optimization, LLC */
 
 /* This example formulates and solves the following simple MIP model:
@@ -9,6 +8,7 @@
                  x, y, z binary
 */
 
+/*
 #include "include/gurobi_c++.h"
 #include "include/lp_c++.h"
 #include "SSG.h"
@@ -117,3 +117,4 @@ int gerby()
 }
 
 
+*/

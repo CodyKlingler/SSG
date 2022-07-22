@@ -15,12 +15,11 @@
 #include "include/SSG.h"
 #include "include/SSG_tests.h"
 #include "include/permute.h"
-#include "lp_c++.h"
-
-
 
 using namespace std;
 
+
+string cur_folder = "junk"; //folder to write improved games to
 
 /* TODO
     -reserve matrix
@@ -34,7 +33,6 @@ vector<int> hardest_game_switches(0);
 std::vector<std::vector<bool>(SSG::*)(std::vector<bool>)> algorithms = {&SSG::bruteforce, &SSG::ludwig_iterative,  &SSG::hoffman_karp, &SSG::tripathi_hoffman_karp };
 std::vector<const char*> algorithm_names = {"ludwig", "bruteforce"};
 std::vector<const char*> algorithm_abbrev = {"lw", "bf"};
-
 
 const int n_strats = 5;
 const int n_verts = 3;
@@ -108,10 +106,9 @@ int find_bad_game(){
     return 0;
 }
 
-
 void get_best_txt(vector<int> &vec){
     ifstream file;
-    file.open("hardest_games/best.txt");
+    file.open(cur_folder + "/best.txt");
     std::string cur_line;
 
     std::getline(file, cur_line);
@@ -132,7 +129,7 @@ void get_best_txt(vector<int> &vec){
 
 void set_best_txt(vector<int> &best_vec){
     ofstream file;
-    file.open("hardest_games/best.txt");
+    file.open(cur_folder + "/best.txt");
     file << best_vec.size() << endl;
 
     for(auto it = best_vec.begin(); it != best_vec.end(); it++){
@@ -145,7 +142,7 @@ void set_best_txt(vector<int> &best_vec){
 void write_hard_game(SSG gg){
     int v = gg.n;
     ofstream file;
-    file.open("hardest_games/g" + to_string(v) + ".txt");
+    file.open(cur_folder + "/g" + to_string(v) + ".txt");
     file << gg;
     file.close();
 }
@@ -237,7 +234,7 @@ int make_game_harder_static_n_max(SSG &gg){
     vector<int> vs = permutation_in_range(0, gg.n-2);
     vector<int> a_rand = permutation_in_range(0, gg.n);
 
-    vector<int> ts = permutation_in_range(1,3);
+    vector<int> ts = permutation_in_range(2,4);
     vector<int> tm = {3};
 
     bool increasing;
@@ -293,14 +290,91 @@ int make_game_harder_static_n_max(SSG &gg){
     return max_switches;
 }
 
-int make_game_harder(SSG &gg, int &max_switches){
-    //cout << ".." << flush;
+int make_game_harder_static_type_nontrivial(SSG &gg){
+
+    int max_switches = gg.hoffman_karp_n_iterations_inverse();
 
     vector<int> vs = permutation_in_range(0, gg.n-2);
-
     vector<int> a_rand = permutation_in_range(0, gg.n);
 
-    vector<int> ts = permutation_in_range(1,4);
+    vector<int> tm = {3};
+
+    bool increasing;
+    do{
+        increasing = false;
+
+        std::shuffle(std::begin(vs), std::end(vs), rng);
+
+        for(auto vit = vs.begin(); vit!=vs.end(); vit++){
+            int v = *vit;
+            int e1 = gg.outgoing_edge[v][0];
+            int e2 = gg.outgoing_edge[v][1];
+
+
+            std::set<int> exclude;
+            exclude.insert(v);
+            
+            for(int i_v: gg.incoming_edges[v]){
+                if(gg.type[i_v] == gg.type[v] || abs(gg.type[i_v] - gg.type[v])==2){ //dont let same types (or player) vertices point toward eachother
+                    exclude.insert(i_v);
+                }
+            }
+
+            if(gg.type[v] != vertex_type::ave){ //dont let player vertices point toward sink
+                exclude.insert(gg.n-1);
+                exclude.insert(gg.n-2);
+            }
+
+            std::shuffle(std::begin(a_rand), std::end(a_rand), rng);
+
+            for(auto ait = a_rand.begin(); ait!=a_rand.end(); ait++){
+                int a = *ait;
+
+                if(exclude.count(a))
+                    continue;
+
+
+                vector<int> b_rand = permutation_in_range(a, gg.n);
+
+                for(auto bit = b_rand.begin(); bit!=b_rand.end(); bit++){
+                    int b = *bit;
+
+                    if(exclude.count(b))
+                        continue;
+                    if(a == b)
+                        continue;
+
+                    gg.force_vertex(v, gg.type[v], a, b);
+                    
+                    int switches = gg.hoffman_karp_n_iterations_inverse();
+
+                    if(switches > max_switches){
+                        max_switches = switches;
+                        increasing = true;
+
+                        e1 = a;
+                        e2 = b;
+                    }
+                    if(switches > hardest_game_switches[gg.n]){
+                        hardest_game_switches[gg.n] = switches;
+                        set_best_txt(hardest_game_switches);
+                        write_hard_game(gg);
+                    }
+                }
+            }
+            gg.force_vertex(v, gg.type[v], e1, e2);
+        }
+    }while(increasing);
+    return max_switches;
+}
+
+int make_game_harder(SSG &gg){
+    //cout << ".." << flush;
+
+    int max_switches = gg.hoffman_karp_n_iterations();
+    vector<int> vs = permutation_in_range(0, gg.n-2);
+    vector<int> a_rand = permutation_in_range(0, gg.n);
+    vector<int> ts = permutation_in_range(2,5);
 
     bool increasing;
     do{
@@ -357,43 +431,294 @@ int make_game_harder(SSG &gg, int &max_switches){
     return max_switches;
 }
 
-int main(int n, char* args[]){
+int make_game_harder(SSG &gg, vector<bool> init_s){
+    //cout << ".." << flush;
+
+    int max_switches = gg.hoffman_karp_n_iterations(init_s);
+
+    vector<int> vs = permutation_in_range(0, gg.n-2);
+
+    vector<int> a_rand = permutation_in_range(0, gg.n);
+
+    vector<int> ts = permutation_in_range(2,5);
+
+    bool increasing;
+    do{
+        increasing = false;
+
+        std::shuffle(std::begin(vs), std::end(vs), rng);
+
+        for(auto vit = vs.begin(); vit!=vs.end(); vit++){
+            int v = *vit;
+            vertex_type t_og = gg.type[v];
+            int e1 = gg.outgoing_edge[v][0];
+            int e2 = gg.outgoing_edge[v][1];
+
+            std::shuffle(std::begin(ts), std::end(ts), rng);
+            for(auto tit = ts.begin(); tit!=ts.end(); tit++){
+                int t = *tit;
+                vertex_type type = (vertex_type)t;
+                std::shuffle(std::begin(a_rand), std::end(a_rand), rng);
+
+                for(auto ait = a_rand.begin(); ait!=a_rand.end(); ait++){
+                    int a = *ait;
+
+                    vector<int> b_rand = permutation_in_range(a, gg.n);
+
+                    for(auto bit = b_rand.begin(); bit!=b_rand.end(); bit++){
+                        int b = *bit;
+
+                        gg.force_vertex(v, type, a, b);
+            
+                        int switches = gg.hoffman_karp_n_iterations(init_s);
+
+                        if(switches > max_switches){
+                            max_switches = switches;
+                            //cout << "SWITCHES: " << switches << endl;
+                            //cout << gg << endl;
+                            increasing = true;
+
+                            t_og = type;
+                            e1 = a;
+                            e2 = b;
+                            if(switches > hardest_game_switches[gg.n]){
+                                hardest_game_switches[gg.n] = switches;
+                                set_best_txt(hardest_game_switches);
+                                write_hard_game(gg);
+                            }
+                        }
+                    }
+                }
+            }
+            gg.force_vertex(v, t_og, e1, e2);
+        }
+    }while(increasing);
+    //cout << ",,";
+    return max_switches;
+}
+
+int make_game_harder(SSG &gg, int v_start, int v_end){
+    //cout << ".." << flush;
+    int max_switches = gg.hoffman_karp_n_iterations();
+
+    vector<int> vs = permutation_in_range(v_start, v_end);
+
+    vector<int> a_rand = permutation_in_range(0, gg.n);
+
+    vector<int> ts = permutation_in_range(2,5);
+
+    bool increasing;
+    do{
+        increasing = false;
+
+        std::shuffle(std::begin(vs), std::end(vs), rng);
+
+        for(auto vit = vs.begin(); vit!=vs.end(); vit++){
+            int v = *vit;
+            vertex_type t_og = gg.type[v];
+            int e1 = gg.outgoing_edge[v][0];
+            int e2 = gg.outgoing_edge[v][1];
+
+            std::shuffle(std::begin(ts), std::end(ts), rng);
+            for(auto tit = ts.begin(); tit!=ts.end(); tit++){
+                int t = *tit;
+                vertex_type type = (vertex_type)t;
+                std::shuffle(std::begin(a_rand), std::end(a_rand), rng);
+
+                for(auto ait = a_rand.begin(); ait!=a_rand.end(); ait++){
+                    int a = *ait;
+
+                    vector<int> b_rand = permutation_in_range(a, gg.n);
+
+                    for(auto bit = b_rand.begin(); bit!=b_rand.end(); bit++){
+                        int b = *bit;
+
+                        gg.force_vertex(v, type, a, b);
+            
+                        int switches = gg.hoffman_karp_n_iterations();
+
+                        if(switches > max_switches){
+                            max_switches = switches;
+                            //cout << "SWITCHES: " << switches << endl;
+                            //cout << gg << endl;
+                            increasing = true;
+
+                            t_og = type;
+                            e1 = a;
+                            e2 = b;
+                            if(switches > hardest_game_switches[gg.n]){
+                                hardest_game_switches[gg.n] = switches;
+                                set_best_txt(hardest_game_switches);
+                                write_hard_game(gg);
+                            }
+                        }
+                    }
+                }
+            }
+            gg.force_vertex(v, t_og, e1, e2);
+        }
+    }while(increasing);
+    //cout << ",,";
+    return max_switches;
+}
+
+int make_game_harder_constant_type(SSG &gg){
+    //cout << ".." << flush;
+    int max_switches = gg.hoffman_karp_n_iterations();
+
+    vector<int> vs = permutation_in_range(0, gg.n-2);
+    vector<int> a_rand = permutation_in_range(0, gg.n);
+
+    bool increasing;
+    do{
+        increasing = false;
+
+        std::shuffle(std::begin(vs), std::end(vs), rng);
+
+        for(auto vit = vs.begin(); vit!=vs.end(); vit++){
+            int v = *vit;
+            vertex_type type = gg.type[v];
+            int e1 = gg.outgoing_edge[v][0];
+            int e2 = gg.outgoing_edge[v][1];
+
+                std::shuffle(std::begin(a_rand), std::end(a_rand), rng);
+                for(auto ait = a_rand.begin(); ait!=a_rand.end(); ait++){
+                    int a = *ait;
+
+                    vector<int> b_rand = permutation_in_range(a, gg.n);
+                    for(auto bit = b_rand.begin(); bit!=b_rand.end(); bit++){
+                        int b = *bit;
+
+                        gg.force_vertex(v, type, a, b);
+            
+                        int switches = gg.hoffman_karp_n_iterations();
+
+                        if(switches > max_switches){
+                            max_switches = switches;
+                            //cout << "SWITCHES: " << switches << endl;
+                            //cout << gg << endl;
+                            increasing = true;
+
+                            e1 = a;
+                            e2 = b;
+                            if(switches > hardest_game_switches[gg.n]){
+                                hardest_game_switches[gg.n] = switches;
+                                set_best_txt(hardest_game_switches);
+                                write_hard_game(gg);
+                            }
+                        }
+                    }
+                }
+            gg.force_vertex(v, type, e1, e2);
+        }
+    }while(increasing);
+    //cout << ",,";
+    return max_switches;
+}
+
+
+int main(int n_args, char* args[]){
     srand(time(NULL)); std::cout << std::fixed << std::setprecision(4);
     if(hardest_game_switches.size() == 0){
         get_best_txt(hardest_game_switches);
+    }   
+
+        //vertices with no switches are useless, unless when they produce switches from having a lower number (?maybe?).
+        //some are certainly useless
+        //can we remove vertices without switches and figure out where to place them such that they make the game harder to settle?
+        // make min go before max in hoffman karp.
+
+        //remove all vertices that do not switch.
+        // min verts = (n-2)/3
+        // max = min
+        // ave = (n-2) - min - max
+
+
+    //bool test_correctness(int n_games, int n_strats_per_game, int n_vertices){
+    
+    int v = 10;
+
+    /*
+    vector<SSG> hardest_games;
+    for(int n = 0; n<100; n++){
+        vector<SSG> hard_games;
+        int iters = 0;
+        cout << n << endl;
+        for(int i = 0; i<3; i++){
+            SSG g = SSG::random_game(v);
+            int this_iters = make_game_harder(g);
+            if(iters < this_iters){
+                iters = this_iters;
+                hard_games.push_back(g);
+            }
+        }
+        hardest_games.push_back(hard_games.back());
     }
+    */
+  /* for(int v = 6; v<100; v++){
+        vector<SSG> max_games;
+        for(int i = 0; i<10; i++){
+            max_games.push_back(SSG::hard_game_max(v));
+        }
 
+        benchmark_SSG(max_games);
+        //benchmark_SSG(max_games.size(), v);
+   }*/
 
-    SSG g = SSG::read_game("folder/unimproved.txt");
-
-    g.hoffman_karp_n_iterations_strat();
-
-    //cout <<= g;
-    cout << endl;
-
+    for(int i = 6; i<25; i++){
+        if(!test_correctness(100,1,i)){
+            cout << "i" << endl;
+        }
+    }
 
     return 0;
 
-    const int n_games = 10000;
+    
+    for(int i = 5; i<18; i++){
+        SSG g = SSG::read_game("dermans_nontrivial/g"+to_string(i)+".txt");
+        cout <<= g;
+        cout << endl;
+        
+        cout << g.hoffman_karp_n_iterations_inverse();
+        cout << endl << endl;
+
+
+        //g.hoffman_karp_n_iterations_print();
+    }
+
+    return 0;
+
+    const int n_games = 100;
 
     while(true){
-        for(int v = 9; v<10; v++){
+        for(int v = 5; v<12; v++){
             cout << v << endl;
             int max = 0;
             for(int n_g = 0; n_g<n_games; n_g++){
-                SSG g = SSG::random_game_n_max(3,v);
-                
-                int prev_hardest = hardest_game_switches[g.n];
-                
-                int i = g.hoffman_karp_n_iterations();
 
-                if(i > prev_hardest){
-                    hardest_game_switches[g.n] = i;
+                int max_game = 0;
+                vector<SSG> x;
+                for(int i = 0; i<100; i++){
+                    SSG g = SSG::random_nontrivial_game(v);
+                    int iters = g.hoffman_karp_n_iterations_inverse();
+                    if(iters > max_game){
+                        max_game = iters;
+                        x.push_back(g);
+                    }
+                }
+                
+                int init = x.back().hoffman_karp_n_iterations_dermans();
+                
+                init = make_game_harder_static_type_nontrivial(x.back());
+                cout << "v: " << v << "  i: " << init << endl;
+
+                /*if(init > hardest_game_switches[v]){
+                    hardest_game_switches[v] = init;
                     set_best_txt(hardest_game_switches);
                     write_hard_game(g);
-                    cout << "v: " << v << "  sw: " << i << endl;
-                }
+                }*/
             }
+            cout << endl;
         }
     }
     return 0;
