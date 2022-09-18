@@ -8,7 +8,7 @@
                  x, y, z binary
 */
 
-/*
+
 #include "include/gurobi_c++.h"
 #include "include/lp_c++.h"
 #include "SSG.h"
@@ -115,6 +115,3 @@ int gerby()
 
   return 0;
 }
-
-
-*/

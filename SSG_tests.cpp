@@ -9,7 +9,7 @@
 
 //#define SSG_TEST_PRINT
 
-std::vector<std::vector<bool>(SSG::*)(void)> SSG_algorithms = {&SSG::hoffman_karp,  &SSG::hoffman_karp2};t//,&SSG::hoffman_karp2_dermans, &SSG::tripathi_hoffman_karp, &SSG::ludwig_iterative};
+std::vector<std::vector<bool>(SSG::*)(void)> SSG_algorithms = {&SSG::hoffman_karp,  &SSG::hoffman_karp2};//,&SSG::hoffman_karp2_dermans, &SSG::tripathi_hoffman_karp, &SSG::ludwig_iterative};
 std::vector<const char*> SSG_algorithm_names = {"hoff-karp", "ludwig"};
 
 std::vector<std::vector<bool>(SSG::*)(std::vector<bool>)> unused_algorithms = {&SSG::incorrect_hoffman_karp};

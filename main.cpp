@@ -16,6 +16,8 @@
 #include "include/SSG_tests.h"
 #include "include/permute.h"
 
+#include "include/lp_c++.h"
+
 using namespace std;
 
 
@@ -619,6 +621,9 @@ int make_game_harder_constant_type(SSG &gg){
 
 int main(int n_args, char* args[]){
     srand(time(NULL)); std::cout << std::fixed << std::setprecision(4);
+
+    main2();
+    return 0;
     if(hardest_game_switches.size() == 0){
         get_best_txt(hardest_game_switches);
     }   
