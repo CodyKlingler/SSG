@@ -41,7 +41,7 @@ class SSG{
         constexpr static double default_tolerance = .0075;
         double tolerance = default_tolerance;
         const int c = 2;
-        double beta = 0.00010;
+        double beta = 0.0010;
         
 
    

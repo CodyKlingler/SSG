@@ -622,7 +622,16 @@ int make_game_harder_constant_type(SSG &gg){
 int main(int n_args, char* args[]){
     srand(time(NULL)); std::cout << std::fixed << std::setprecision(4);
 
-    main2();
+    SSG g = SSG::random_game_equal_split(16);
+    auto strat = SSG::random_strategy(g.n);
+    cout << g.probabilities(strat) << endl << endl;
+
+    main2(g, strat);
+
+    cout << endl << endl;
+    g.optimize_min(strat);
+    cout << g.probabilities(strat) << endl << endl;
+
     return 0;
     if(hardest_game_switches.size() == 0){
         get_best_txt(hardest_game_switches);

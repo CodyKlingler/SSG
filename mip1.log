@@ -121,3 +121,479 @@ Optimal objective  2.500000000e+00
 Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 18:53:48 2022
 
 Set parameter LogFile to value "mip1.log"
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 19:17:40 2022
+
+Set parameter LogFile to value "mip1.log"
+Gurobi Optimizer version 9.5.1 build v9.5.1rc2 (linux64)
+Thread count: 4 physical cores, 4 logical processors, using up to 4 threads
+Optimize a model with 2 rows, 3 columns and 5 nonzeros
+Model fingerprint: 0x98886187
+Variable types: 0 continuous, 3 integer (3 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+00]
+  Objective range  [1e+00, 2e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 4e+00]
+Found heuristic solution: objective 2.0000000
+Presolve removed 2 rows and 3 columns
+Presolve time: 0.01s
+Presolve: All rows and columns removed
+
+Explored 0 nodes (0 simplex iterations) in 0.02 seconds (0.00 work units)
+Thread count was 1 (of 4 available processors)
+
+Solution count 2: 3 2 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 3.000000000000e+00, best bound 3.000000000000e+00, gap 0.0000%
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 21:59:17 2022
+
+Set parameter LogFile to value "mip1.log"
+Gurobi Optimizer version 9.5.1 build v9.5.1rc2 (linux64)
+Thread count: 4 physical cores, 4 logical processors, using up to 4 threads
+Optimize a model with 18 rows, 16 columns and 32 nonzeros
+Model fingerprint: 0xc32909ab
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve removed 18 rows and 16 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -0.0000000e+00   0.000000e+00   0.000000e+00      0s
+
+Solved in 0 iterations and 0.00 seconds (0.00 work units)
+Optimal objective -0.000000000e+00
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 22:01:55 2022
+
+Set parameter LogFile to value "mip1.log"
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 22:02:26 2022
+
+Set parameter LogFile to value "mip1.log"
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 22:03:26 2022
+
+Set parameter LogFile to value "mip1.log"
+Gurobi Optimizer version 9.5.1 build v9.5.1rc2 (linux64)
+Thread count: 4 physical cores, 4 logical processors, using up to 4 threads
+Optimize a model with 18 rows, 16 columns and 32 nonzeros
+Model fingerprint: 0xe915b146
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve removed 18 rows and 16 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -0.0000000e+00   0.000000e+00   0.000000e+00      0s
+
+Solved in 0 iterations and 0.00 seconds (0.00 work units)
+Optimal objective -0.000000000e+00
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 22:19:22 2022
+
+Set parameter LogFile to value "mip1.log"
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 22:21:00 2022
+
+Set parameter LogFile to value "mip1.log"
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 22:21:42 2022
+
+Set parameter LogFile to value "mip1.log"
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 22:21:55 2022
+
+Set parameter LogFile to value "mip1.log"
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 22:27:09 2022
+
+Set parameter LogFile to value "mip1.log"
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 22:28:01 2022
+
+Set parameter LogFile to value "mip1.log"
+Gurobi Optimizer version 9.5.1 build v9.5.1rc2 (linux64)
+Thread count: 4 physical cores, 4 logical processors, using up to 4 threads
+Optimize a model with 18 rows, 16 columns and 32 nonzeros
+Model fingerprint: 0xbe95461e
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve removed 18 rows and 16 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    1.0000000e+00   0.000000e+00   0.000000e+00      0s
+
+Solved in 0 iterations and 0.00 seconds (0.00 work units)
+Optimal objective  1.000000000e+00
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 22:50:05 2022
+
+Set parameter LogFile to value "mip1.log"
+Gurobi Optimizer version 9.5.1 build v9.5.1rc2 (linux64)
+Thread count: 4 physical cores, 4 logical processors, using up to 4 threads
+Optimize a model with 18 rows, 16 columns and 34 nonzeros
+Model fingerprint: 0x6955fcf2
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve removed 18 rows and 16 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -0.0000000e+00   0.000000e+00   0.000000e+00      0s
+
+Solved in 0 iterations and 0.00 seconds (0.00 work units)
+Optimal objective -0.000000000e+00
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 22:50:20 2022
+
+Set parameter LogFile to value "mip1.log"
+Gurobi Optimizer version 9.5.1 build v9.5.1rc2 (linux64)
+Thread count: 4 physical cores, 4 logical processors, using up to 4 threads
+Optimize a model with 18 rows, 16 columns and 33 nonzeros
+Model fingerprint: 0x6c9406e5
+Coefficient statistics:
+  Matrix range     [1e-02, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve removed 18 rows and 16 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -0.0000000e+00   0.000000e+00   0.000000e+00      0s
+
+Solved in 0 iterations and 0.00 seconds (0.00 work units)
+Optimal objective -0.000000000e+00
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 23:15:40 2022
+
+Set parameter LogFile to value "mip1.log"
+Gurobi Optimizer version 9.5.1 build v9.5.1rc2 (linux64)
+Thread count: 4 physical cores, 4 logical processors, using up to 4 threads
+Optimize a model with 18 rows, 16 columns and 34 nonzeros
+Model fingerprint: 0x60e52a87
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve removed 18 rows and 16 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -0.0000000e+00   0.000000e+00   0.000000e+00      0s
+
+Solved in 0 iterations and 0.00 seconds (0.00 work units)
+Optimal objective -0.000000000e+00
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 23:16:12 2022
+
+Set parameter LogFile to value "mip1.log"
+Gurobi Optimizer version 9.5.1 build v9.5.1rc2 (linux64)
+Thread count: 4 physical cores, 4 logical processors, using up to 4 threads
+Optimize a model with 18 rows, 16 columns and 33 nonzeros
+Model fingerprint: 0xa5c4644b
+Coefficient statistics:
+  Matrix range     [1e-02, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve removed 18 rows and 16 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -0.0000000e+00   0.000000e+00   0.000000e+00      0s
+
+Solved in 0 iterations and 0.00 seconds (0.00 work units)
+Optimal objective -0.000000000e+00
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 23:17:25 2022
+
+Set parameter LogFile to value "mip1.log"
+Gurobi Optimizer version 9.5.1 build v9.5.1rc2 (linux64)
+Thread count: 4 physical cores, 4 logical processors, using up to 4 threads
+Optimize a model with 22 rows, 16 columns and 46 nonzeros
+Model fingerprint: 0xb7f73bfb
+Coefficient statistics:
+  Matrix range     [5e-01, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve removed 16 rows and 11 columns
+Presolve time: 0.00s
+Presolved: 6 rows, 5 columns, 12 nonzeros
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0    9.8010000e-01   2.425438e-01   0.000000e+00      0s
+       3    9.6852977e-01   0.000000e+00   0.000000e+00      0s
+
+Solved in 3 iterations and 0.00 seconds (0.00 work units)
+Optimal objective  9.685297656e-01
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 23:19:51 2022
+
+Set parameter LogFile to value "mip1.log"
+Gurobi Optimizer version 9.5.1 build v9.5.1rc2 (linux64)
+Thread count: 4 physical cores, 4 logical processors, using up to 4 threads
+Optimize a model with 22 rows, 16 columns and 44 nonzeros
+Model fingerprint: 0x359a7fd5
+Coefficient statistics:
+  Matrix range     [1e-02, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve removed 22 rows and 16 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -0.0000000e+00   0.000000e+00   0.000000e+00      0s
+
+Solved in 0 iterations and 0.00 seconds (0.00 work units)
+Optimal objective -0.000000000e+00
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 23:19:58 2022
+
+Set parameter LogFile to value "mip1.log"
+Gurobi Optimizer version 9.5.1 build v9.5.1rc2 (linux64)
+Thread count: 4 physical cores, 4 logical processors, using up to 4 threads
+Optimize a model with 22 rows, 16 columns and 44 nonzeros
+Model fingerprint: 0x0a4b0c26
+Coefficient statistics:
+  Matrix range     [1e-02, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve removed 22 rows and 16 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -0.0000000e+00   0.000000e+00   0.000000e+00      0s
+
+Solved in 0 iterations and 0.00 seconds (0.00 work units)
+Optimal objective -0.000000000e+00
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 23:20:01 2022
+
+Set parameter LogFile to value "mip1.log"
+Gurobi Optimizer version 9.5.1 build v9.5.1rc2 (linux64)
+Thread count: 4 physical cores, 4 logical processors, using up to 4 threads
+Optimize a model with 22 rows, 16 columns and 45 nonzeros
+Model fingerprint: 0xfd270491
+Coefficient statistics:
+  Matrix range     [5e-01, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve removed 22 rows and 16 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -0.0000000e+00   0.000000e+00   0.000000e+00      0s
+
+Solved in 0 iterations and 0.00 seconds (0.00 work units)
+Optimal objective -0.000000000e+00
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 23:20:02 2022
+
+Set parameter LogFile to value "mip1.log"
+Gurobi Optimizer version 9.5.1 build v9.5.1rc2 (linux64)
+Thread count: 4 physical cores, 4 logical processors, using up to 4 threads
+Optimize a model with 22 rows, 16 columns and 44 nonzeros
+Model fingerprint: 0x83b87a32
+Coefficient statistics:
+  Matrix range     [1e-02, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve removed 22 rows and 16 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -0.0000000e+00   0.000000e+00   0.000000e+00      0s
+
+Solved in 0 iterations and 0.00 seconds (0.00 work units)
+Optimal objective -0.000000000e+00
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 23:20:03 2022
+
+Set parameter LogFile to value "mip1.log"
+Gurobi Optimizer version 9.5.1 build v9.5.1rc2 (linux64)
+Thread count: 4 physical cores, 4 logical processors, using up to 4 threads
+Optimize a model with 22 rows, 16 columns and 43 nonzeros
+Model fingerprint: 0x0e7b250d
+Coefficient statistics:
+  Matrix range     [1e-02, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve removed 22 rows and 16 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -0.0000000e+00   0.000000e+00   0.000000e+00      0s
+
+Solved in 0 iterations and 0.00 seconds (0.00 work units)
+Optimal objective -0.000000000e+00
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 23:20:04 2022
+
+Set parameter LogFile to value "mip1.log"
+Gurobi Optimizer version 9.5.1 build v9.5.1rc2 (linux64)
+Thread count: 4 physical cores, 4 logical processors, using up to 4 threads
+Optimize a model with 22 rows, 16 columns and 44 nonzeros
+Model fingerprint: 0xb46ef2ff
+Coefficient statistics:
+  Matrix range     [5e-01, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve removed 22 rows and 16 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -0.0000000e+00   0.000000e+00   0.000000e+00      0s
+
+Solved in 0 iterations and 0.00 seconds (0.00 work units)
+Optimal objective -0.000000000e+00
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 23:20:04 2022
+
+Set parameter LogFile to value "mip1.log"
+Gurobi Optimizer version 9.5.1 build v9.5.1rc2 (linux64)
+Thread count: 4 physical cores, 4 logical processors, using up to 4 threads
+Optimize a model with 22 rows, 16 columns and 44 nonzeros
+Model fingerprint: 0xb46ef2ff
+Coefficient statistics:
+  Matrix range     [5e-01, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve removed 22 rows and 16 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -0.0000000e+00   0.000000e+00   0.000000e+00      0s
+
+Solved in 0 iterations and 0.00 seconds (0.00 work units)
+Optimal objective -0.000000000e+00
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 23:20:05 2022
+
+Set parameter LogFile to value "mip1.log"
+Gurobi Optimizer version 9.5.1 build v9.5.1rc2 (linux64)
+Thread count: 4 physical cores, 4 logical processors, using up to 4 threads
+Optimize a model with 22 rows, 16 columns and 46 nonzeros
+Model fingerprint: 0xd6b9d959
+Coefficient statistics:
+  Matrix range     [5e-01, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve removed 22 rows and 16 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -0.0000000e+00   0.000000e+00   0.000000e+00      0s
+
+Solved in 0 iterations and 0.00 seconds (0.00 work units)
+Optimal objective -0.000000000e+00
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 23:20:06 2022
+
+Set parameter LogFile to value "mip1.log"
+Gurobi Optimizer version 9.5.1 build v9.5.1rc2 (linux64)
+Thread count: 4 physical cores, 4 logical processors, using up to 4 threads
+Optimize a model with 22 rows, 16 columns and 45 nonzeros
+Model fingerprint: 0x220292a2
+Coefficient statistics:
+  Matrix range     [5e-01, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve removed 22 rows and 16 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -0.0000000e+00   0.000000e+00   0.000000e+00      0s
+
+Solved in 0 iterations and 0.00 seconds (0.00 work units)
+Optimal objective -0.000000000e+00
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 23:20:06 2022
+
+Set parameter LogFile to value "mip1.log"
+Gurobi Optimizer version 9.5.1 build v9.5.1rc2 (linux64)
+Thread count: 4 physical cores, 4 logical processors, using up to 4 threads
+Optimize a model with 22 rows, 16 columns and 45 nonzeros
+Model fingerprint: 0x220292a2
+Coefficient statistics:
+  Matrix range     [5e-01, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve removed 22 rows and 16 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -0.0000000e+00   0.000000e+00   0.000000e+00      0s
+
+Solved in 0 iterations and 0.00 seconds (0.00 work units)
+Optimal objective -0.000000000e+00
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 23:20:07 2022
+
+Set parameter LogFile to value "mip1.log"
+Gurobi Optimizer version 9.5.1 build v9.5.1rc2 (linux64)
+Thread count: 4 physical cores, 4 logical processors, using up to 4 threads
+Optimize a model with 22 rows, 16 columns and 46 nonzeros
+Model fingerprint: 0x62dd7a73
+Coefficient statistics:
+  Matrix range     [5e-01, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve removed 22 rows and 16 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -0.0000000e+00   0.000000e+00   0.000000e+00      0s
+
+Solved in 0 iterations and 0.00 seconds (0.00 work units)
+Optimal objective -0.000000000e+00
+
+Gurobi 9.5.1 (linux64, C++) logging started Sun Sep 18 23:20:07 2022
+
+Set parameter LogFile to value "mip1.log"
+Gurobi Optimizer version 9.5.1 build v9.5.1rc2 (linux64)
+Thread count: 4 physical cores, 4 logical processors, using up to 4 threads
+Optimize a model with 22 rows, 16 columns and 46 nonzeros
+Model fingerprint: 0x62dd7a73
+Coefficient statistics:
+  Matrix range     [5e-01, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve removed 22 rows and 16 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0   -0.0000000e+00   0.000000e+00   0.000000e+00      0s
+
+Solved in 0 iterations and 0.00 seconds (0.00 work units)
+Optimal objective -0.000000000e+00

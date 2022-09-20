@@ -15,7 +15,7 @@
 
 using namespace std;
 
-int main2()
+int main2(SSG& gg, std::vector<bool> strategy)
 {
   try {
 
@@ -27,29 +27,62 @@ int main2()
     // Create an empty model
     GRBModel model = GRBModel(env);
 
-    // Create variables
-    GRBVar x = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "x");
-    GRBVar y = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "y");
-    GRBVar z = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "z");
 
     // Set objective: maximize x + y + 2 z
-    model.setObjective(x + y + 2 * z, GRB_MAXIMIZE);
 
-    // Add constraint: x + 2 y + 3 z <= 4
-    model.addConstr(x + 2 * y + 3 * z <= 4, "c0");
+    // Create variables
+    GRBVar vert[gg.n];
 
-    // Add constraint: x + y >= 1
-    model.addConstr(x + y >= 1, "c1");
+    for(int i = 0; i<gg.n; i++){
+      vert[i] = model.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS);
+    }
+
+    // Add constraints
+    for(int i = 0; i<gg.n; i++){
+      auto type = gg.type[i];
+      int j = gg.outgoing_edge[i][0];
+      int k = gg.outgoing_edge[i][1];
+      int selected = gg.outgoing_edge[i][strategy[i]];
+
+      if(type == vertex_type::max){
+        model.addConstr(vert[i],GRB_EQUAL,vert[selected]);
+      }
+      else if(type == vertex_type::min){
+        model.addConstr(vert[i],GRB_LESS_EQUAL,vert[j]*(1-gg.beta));
+        model.addConstr(vert[i],GRB_LESS_EQUAL,vert[k]*(1-gg.beta));
+      }
+      else if(type == vertex_type::ave){
+        model.addConstr(vert[i],GRB_LESS_EQUAL,.5 *(1-gg.beta)* vert[k] + .5 * (1-gg.beta) * vert[j]);
+      }
+      else if(type == vertex_type::sink_max){
+        model.addConstr(vert[i],GRB_EQUAL,1);
+      }
+      else if(type == vertex_type::sink_min){
+        model.addConstr(vert[i],GRB_EQUAL,0);
+      }
+    }
+
+    // find coefficient for each vertex in the objective function
+    double coeffs[gg.n] = {1.0};
+
+    for(int i = 0; i<gg.n; i++){
+      if(gg.type[i] == vertex_type::max)
+        coeffs[i] = 0.0;
+    }
+
+    GRBLinExpr objective_fn;
+    objective_fn.addTerms(coeffs,vert,gg.n);
+    
+    model.setObjective(objective_fn, GRB_MAXIMIZE);
 
     // Optimize model
     model.optimize();
 
-    cout << x.get(GRB_StringAttr_VarName) << " "
-         << x.get(GRB_DoubleAttr_X) << endl;
-    cout << y.get(GRB_StringAttr_VarName) << " "
-         << y.get(GRB_DoubleAttr_X) << endl;
-    cout << z.get(GRB_StringAttr_VarName) << " "
-         << z.get(GRB_DoubleAttr_X) << endl;
+    cout << flush;
+
+    for(int i = 0; i<gg.n; i++){
+      cout << vert[i].get(GRB_DoubleAttr_X) << " ";
+    } cout << endl;
 
     cout << "Obj: " << model.get(GRB_DoubleAttr_ObjVal) << endl;
 
