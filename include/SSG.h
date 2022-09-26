@@ -44,7 +44,6 @@ class SSG{
         double beta = 0.0010;
         
 
-   
         SSG(int n_vertices);
         //SSG(const SSG &game); //TODO
         //SSG(std::ifstream& file); //TODO
@@ -70,6 +69,12 @@ class SSG{
 
         //STRATEGY SOLVING ALGORITHMS
 
+        //reconstruct min from prob vector. return true if any changes made to strategy
+        bool reconstruct_strategy(std::vector<bool> &strategy, std::vector<double> p);
+        bool switch_max(std::vector<bool> &strategy, std::vector<double> p);
+        std::vector<double> optimize_min_LP(std::vector<bool> &strategy);
+
+
         bool optimize_min(std::vector<bool> &s);
         bool optimize_min(std::vector<bool> &s, std::vector<double> probs);
 
@@ -90,6 +95,9 @@ class SSG{
         std::vector<bool> hoffman_karp2(std::vector<bool> s); //does min before max.
         std::vector<bool> hoffman_karp2_dermans();
         std::vector<bool> hoffman_karp2_dermans(std::vector<bool> s);
+        std::vector<bool> hoffman_karp_LP();
+        std::vector<bool> hoffman_karp_LP(std::vector<bool> s);
+
 
         int hoffman_karp_n_iterations();
         int hoffman_karp_n_iterations(std::vector<bool> s);
@@ -104,6 +112,9 @@ class SSG{
 
         std::vector<bool> ludwig_iterative();
         std::vector<bool> ludwig_iterative(std::vector<bool> s);
+
+        std::vector<bool> ludwig_iterative_2();
+        std::vector<bool> ludwig_iterative_2(std::vector<bool> s);
 
         std::vector<bool> incorrect_hoffman_karp(std::vector<bool> s);
         std::vector<bool> incorrect_hoffman_karp();

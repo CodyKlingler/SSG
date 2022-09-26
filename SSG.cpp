@@ -5,13 +5,27 @@
 #include <fstream>
 #include <tuple>
 
+
+
 #include "include/Strategy.h"
 #include "include/SSG.h"
 #include "include/permute.h"
+#include "include/gurobi_c++.h"
 
 //#define SSG_print
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
+
+GRBEnv env = GRBEnv(true);
+bool gurobi_started = false;
+void start_gurobi(){
+    if(! gurobi_started){
+        env.set(GRB_IntParam_OutputFlag,0);
+        env.start();
+        gurobi_started = true;
+    }
+}
+
 
 const char* vertex_type_names[] = {
     "undefined",
@@ -618,6 +632,120 @@ std::vector<bool> SSG::hoffman_karp2(){
     std::vector<bool> s(n,0);
     return hoffman_karp2(s);
 }
+
+bool SSG::reconstruct_strategy(std::vector<bool> &strategy, std::vector<double> p){
+    bool ret = false;
+    for(int i = 0; i<n; i++){
+        if(type[i] == vertex_type::min){
+            int j = outgoing_edge[i][0];
+            int k = outgoing_edge[i][1];
+            bool old_strat = strategy[i];
+            strategy[i] = p[j] > p[k]; // selects smaller probability.
+            if(strategy[i] != old_strat && p[j]!=p[k]){
+                ret = true;
+            }
+        }
+    }
+    return ret;
+}
+
+bool SSG::switch_max(std::vector<bool> &strategy, std::vector<double> p){
+    bool ret = false;
+    for(int i = 0; i<n; i++){
+        if(type[i] == vertex_type::max){
+            int j = outgoing_edge[i][0];
+            int k = outgoing_edge[i][1];
+            bool old_strat = strategy[i];
+            strategy[i] = p[j] < p[k]; // selects bigger probability.
+            if(strategy[i] != old_strat && p[j]!=p[k]){
+                ret = true;
+            }
+        }
+    }
+    return ret;
+}
+
+std::vector<double> SSG::optimize_min_LP(std::vector<bool> &strategy){
+  // returns prob
+  std::vector<double> prob(0);
+
+  try {
+    start_gurobi();
+
+    // Create an empty model
+    GRBModel model = GRBModel(env);
+
+    // Create variables
+    GRBVar vert[n];
+    for(int i = 0; i<n; i++){
+      vert[i] = model.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS);
+    }
+
+    // Add constraints
+    for(int i = 0; i<n; i++){
+      int j = outgoing_edge[i][0];
+      int k = outgoing_edge[i][1];
+      int selected = outgoing_edge[i][strategy[i]];
+
+      double prob_move_next = (1-beta);
+
+      if(type[i] == vertex_type::max){
+        model.addConstr(vert[i],GRB_EQUAL,vert[selected]*prob_move_next);
+      }
+      else if(type[i] == vertex_type::min){
+        model.addConstr(vert[i],GRB_LESS_EQUAL,vert[j]*prob_move_next );
+        model.addConstr(vert[i],GRB_LESS_EQUAL,vert[k]*prob_move_next );
+      }
+      else if(type[i] == vertex_type::ave){
+        model.addConstr(vert[i],GRB_EQUAL,.5 *prob_move_next * vert[k] + .5 * prob_move_next  * vert[j]);
+      }
+      else if(type[i] == vertex_type::sink_max){
+        model.addConstr(vert[i],GRB_EQUAL,1);
+      }
+      else if(type[i] == vertex_type::sink_min){
+        model.addConstr(vert[i],GRB_EQUAL,0);
+      }
+    }
+
+    // find coefficient for each vertex in the objective function.
+    std::vector<double> coeffs(n, 1.0);
+
+    // set objective function
+    GRBLinExpr objective_fn;
+    objective_fn.addTerms(coeffs.data(),vert,n);
+    model.setObjective(objective_fn, GRB_MAXIMIZE);
+
+    // solve model
+    model.optimize();
+
+    // build probability vector
+    for(int i = 0; i<n; i++){
+      prob.push_back(vert[i].get(GRB_DoubleAttr_X));
+    }
+  } catch(GRBException e) {
+    std::cout << "Error code = " << e.getErrorCode() << std::endl;
+    std::cout << e.getMessage() << std::endl;
+  } catch(...) {
+    std::cout << "Exception during optimization" << std::endl;
+  }
+  return prob;
+}
+
+std::vector<bool> SSG::hoffman_karp_LP(){
+    std::vector<bool> s(n,0);
+    return hoffman_karp_LP(s);
+}
+std::vector<bool> SSG::hoffman_karp_LP(std::vector<bool> s){
+    bool strategys_updated;
+    do{
+        strategys_updated = false;
+        auto probs = optimize_min_LP(s);
+        strategys_updated |= reconstruct_strategy(s, probs);
+        strategys_updated |= switch_max(s, probs);
+    }while(strategys_updated);
+    return s;
+}
+
 std::vector<bool> SSG::hoffman_karp2(std::vector<bool> s){
     int iterations_to_convergence = 0;
 
@@ -1149,20 +1277,15 @@ std::vector<bool> SSG::ludwig_iterative(std::vector<bool> s){
 
     optimize_min(s);
 
-    //bool optimal;
-
     while(s_removed.size()){
-        //std::cout << "'";
-        //optimal = true;
 
-        int cur_s = s_removed.back();
-        s_removed.pop_back();
+        int cur_s = s_removed.back(); s_removed.pop_back();
+
         s_in_game.push_back(cur_s);
 
         auto p = probabilities(s);
 
         for(uint k = 0; k<s_in_game.size(); k++){
-            //std::cout << ",";
             int j = s_in_game[k];
 
             s[j] = !s[j];
@@ -1175,8 +1298,6 @@ std::vector<bool> SSG::ludwig_iterative(std::vector<bool> s){
                 s[cur_s] = !s[cur_s];
                 optimize_min(s);
 
-                //optimal = false;
-
                 s_in_game.pop_back();
                 s_removed.push_back(cur_s);
 
@@ -1186,8 +1307,7 @@ std::vector<bool> SSG::ludwig_iterative(std::vector<bool> s){
                     int v = s_in_game.back();
                     s_in_game.pop_back();
                     s_removed.push_back(v);
-                    //std::cout << ".";
-                }// std::cout << std::endl;
+                }
                 break;
             }
         } //std::cout << std::endl;
@@ -1195,6 +1315,59 @@ std::vector<bool> SSG::ludwig_iterative(std::vector<bool> s){
 
     return s;
 }
+
+
+
+
+std::vector<bool> SSG::ludwig_iterative_2(){
+    std::vector<bool> s(n,0);
+    return ludwig_iterative(s);
+}
+
+std::vector<bool> SSG::ludwig_iterative_2(std::vector<bool> s){
+    std::vector<int> s_removed(max_vertices.begin(), max_vertices.end());
+    std::vector<int> s_in_game(0);
+
+    std::shuffle(std::begin(s_removed), std::end(s_removed), rng);
+
+    optimize_min(s);
+
+    while(s_removed.size()){
+
+        int cur_s = s_removed.back(); s_removed.pop_back();
+        
+        s_in_game.push_back(cur_s);
+
+            auto p = probabilities(s);
+
+            int j = cur_s;
+
+            s[j] = !s[j];
+            auto new_p = probabilities(s);
+            s[j] = !s[j];
+
+            double delta = abs(p[j] - new_p[j]);
+
+            if(delta > tolerance && new_p[j] > p[j]){
+                s[cur_s] = !s[cur_s];
+                optimize_min(s);
+                
+                std::shuffle(std::begin(s_in_game), std::end(s_in_game),rng);
+
+                while(s_in_game.size()>0){
+                    int v = s_in_game.back();
+                    s_in_game.pop_back();
+                    s_removed.push_back(v);
+                }
+                break;
+            }
+
+    } //std::cout << std::endl;
+
+    return s;
+}
+
+
 
 SSG SSG::random_game_loopless(int n){
     SSG game(n);

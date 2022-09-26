@@ -371,7 +371,6 @@ int make_game_harder_static_type_nontrivial(SSG &gg){
 }
 
 int make_game_harder(SSG &gg){
-    //cout << ".." << flush;
 
     int max_switches = gg.hoffman_karp_n_iterations();
     vector<int> vs = permutation_in_range(0, gg.n-2);
@@ -622,17 +621,29 @@ int make_game_harder_constant_type(SSG &gg){
 int main(int n_args, char* args[]){
     srand(time(NULL)); std::cout << std::fixed << std::setprecision(4);
 
-    SSG g = SSG::random_game_equal_split(16);
+    //SSG g = SSG::random_game_equal_split(8);
+    SSG g = SSG::read_game("junk/g.txt");
     auto strat = SSG::random_strategy(g.n);
-    cout << g.probabilities(strat) << endl << endl;
+    
+    auto s1 = g.hoffman_karp(strat);
+    auto s2 = g.hoffman_karp_LP(strat);
 
-    main2(g, strat);
+    cout << g.probabilities(s1) << endl;
+    cout << g.probabilities(s2) << endl;
 
-    cout << endl << endl;
-    g.optimize_min(strat);
-    cout << g.probabilities(strat) << endl << endl;
+    for(int v = 6; v<1000; v++){
+        vector<SSG> games;
+        for(int i = 0; i<10; i++){
+            games.push_back(SSG::random_nontrivial_game(v));
+        }
+
+        benchmark_SSG(games);
+        //benchmark_SSG(max_games.size(), v);
+   }
 
     return 0;
+
+
     if(hardest_game_switches.size() == 0){
         get_best_txt(hardest_game_switches);
     }   
