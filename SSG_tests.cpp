@@ -9,8 +9,21 @@
 
 //#define SSG_TEST_PRINT
 
-std::vector<std::vector<bool>(SSG::*)(void)> SSG_algorithms = {&SSG::ludwig_iterative, &SSG::ludwig_iterative_2};//,&SSG::hoffman_karp2_dermans, &SSG::tripathi_hoffman_karp, &SSG::ludwig_iterative};
-std::vector<const char*> SSG_algorithm_names = {"li 1", "li 2"};
+std::vector<std::vector<bool>(SSG::*)(void)> SSG_algorithms = { //&SSG::hoffman_karp,
+                                                                //&SSG::hoffman_karp_max,
+                                                                //&SSG::hoffman_karp_min,
+                                                                //&SSG::hoffman_karp_LP,
+                                                                //&SSG::hoffman_karp_min_LP,
+                                                                //&SSG::hoffman_karp_max_LP,
+                                                                //&SSG::tripathi_hoffman_karp,
+                                                                //&SSG::tripathi_hoffman_karp_LP,
+                                                                //&SSG::ludwig_iterative,
+                                                                //&SSG::ludwig_iterative_LP,
+                                                                &SSG::quadratic_program,
+                                                                //&SSG::converge_from_below
+                                                                };
+                                                                
+std::vector<const char*> SSG_algorithm_names = {"hk","hklp", "li 1", "li 2"};
 
 std::vector<std::vector<bool>(SSG::*)(std::vector<bool>)> unused_algorithms = {&SSG::incorrect_hoffman_karp};
 std::vector<const char*> unused_names = {"incorrect hoff-karp"};
@@ -208,7 +221,6 @@ void benchmark_SSG(int n_games, int n_vertices){
 
 //assumes each game passed in has the same number of verts
 void benchmark_SSG(std::vector<SSG> games){
-
     int n_games = games.size();
     int n_vertices = games[0].n;
 

@@ -70,10 +70,20 @@ class SSG{
         //STRATEGY SOLVING ALGORITHMS
 
         //reconstruct min from prob vector. return true if any changes made to strategy
+        bool reconstruct_strategy_min(std::vector<bool> &strategy, std::vector<double> p);
+        //reconstruct max from prob vector. return true if any changes made to strategy
+        bool reconstruct_strategy_max(std::vector<bool> &strategy, std::vector<double> p);
+        //reconstruct entire strat from prob vector. return true if any changes made to strategy
         bool reconstruct_strategy(std::vector<bool> &strategy, std::vector<double> p);
-        bool switch_max(std::vector<bool> &strategy, std::vector<double> p);
-        std::vector<double> optimize_min_LP(std::vector<bool> &strategy);
 
+        bool switch_max(std::vector<bool> &strategy, std::vector<double> p);
+        bool switch_max_tripathi(std::vector<bool> &strategy, std::vector<double> p);
+
+        bool switch_min(std::vector<bool> &strategy, std::vector<double> p);
+
+
+        std::vector<double> optimize_min_LP(std::vector<bool> &strategy);
+        std::vector<double> optimize_max_LP(std::vector<bool> &strategy);
 
         bool optimize_min(std::vector<bool> &s);
         bool optimize_min(std::vector<bool> &s, std::vector<double> probs);
@@ -91,12 +101,36 @@ class SSG{
 
         std::vector<bool> hoffman_karp();
         std::vector<bool> hoffman_karp(std::vector<bool> s);
+
+        std::vector<bool> hoffman_karp_min();
+        std::vector<bool> hoffman_karp_min(std::vector<bool> s);
+
+        std::vector<bool> hoffman_karp_max();
+        std::vector<bool> hoffman_karp_max(std::vector<bool> s);
+
         std::vector<bool> hoffman_karp2();
         std::vector<bool> hoffman_karp2(std::vector<bool> s); //does min before max.
+
         std::vector<bool> hoffman_karp2_dermans();
         std::vector<bool> hoffman_karp2_dermans(std::vector<bool> s);
+
         std::vector<bool> hoffman_karp_LP();
         std::vector<bool> hoffman_karp_LP(std::vector<bool> s);
+
+        std::vector<bool> hoffman_karp_min_LP();
+        std::vector<bool> hoffman_karp_min_LP(std::vector<bool> s);
+
+        std::vector<bool> hoffman_karp_max_LP();
+        std::vector<bool> hoffman_karp_max_LP(std::vector<bool> s);
+
+
+        std::vector<bool>   converge_from_below();
+        std::vector<double> converge_from_below_LP(std::vector<double> v);
+
+        std::vector<double> make_max_stable_LP(std::vector<double> &p);
+
+        //computes optimal strategy for max given a probability vector p.
+        void make_max_stable(std::vector<double> &p);
 
 
         int hoffman_karp_n_iterations();
@@ -110,17 +144,27 @@ class SSG{
         std::vector<bool> ludwig();
         std::vector<bool> ludwig(const std::vector<bool> &s);
 
+        std::vector<bool> ludwig_iterative_LP();
+        std::vector<bool> ludwig_iterative_LP(std::vector<bool> s);
+
         std::vector<bool> ludwig_iterative();
         std::vector<bool> ludwig_iterative(std::vector<bool> s);
 
-        std::vector<bool> ludwig_iterative_2();
-        std::vector<bool> ludwig_iterative_2(std::vector<bool> s);
+        std::vector<bool> ludwig_iterative_OG();
+        std::vector<bool> ludwig_iterative_OG(std::vector<bool> s);
 
         std::vector<bool> incorrect_hoffman_karp(std::vector<bool> s);
         std::vector<bool> incorrect_hoffman_karp();
 
         std::vector<bool> tripathi_hoffman_karp(std::vector<bool> s);
         std::vector<bool> tripathi_hoffman_karp();
+
+        std::vector<bool> tripathi_hoffman_karp_LP(std::vector<bool> s);
+        std::vector<bool> tripathi_hoffman_karp_LP(); 
+
+        std::vector<double> QP();
+        std::vector<bool> quadratic_program();
+        std::vector<bool> quadratic_program(std::vector<bool> s);
 
 
         //[0] is min matrix, [1] is max matrix
@@ -137,6 +181,7 @@ class SSG{
         static SSG random_game_n_max(int n_max, int n);
         static SSG hardest_possible_game(int n);    //bruteforce the game that takes the highest number of iterations by hk_iters
         static SSG hardest_game_nontrivial(int n);
+        static SSG double_chain(int n);
         static SSG hard_game_max(int n);
 
         static std::vector<bool> random_strategy(int n);
@@ -146,6 +191,9 @@ class SSG{
         static SSG read_game_expand(std::string file_name, int extra_vertices);
         static std::vector<bool> read_strategy_file(std::ifstream &file);
         static bool probs_match(const std::vector<double> &p1, const std::vector<double> &p2, double tolerance);
+
+
+        void print_vertex_types();
 
         friend std::ostream& operator<<(std::ostream& stream, const SSG& game);
         friend std::ostream& operator<<=(std::ostream& stream, const SSG& game);

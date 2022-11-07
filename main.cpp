@@ -621,25 +621,82 @@ int make_game_harder_constant_type(SSG &gg){
 int main(int n_args, char* args[]){
     srand(time(NULL)); std::cout << std::fixed << std::setprecision(4);
 
-    //SSG g = SSG::random_game_equal_split(8);
-    SSG g = SSG::read_game("junk/g.txt");
+    SSG g = SSG::hard_game_max(10);
+    //SSG g = SSG::read_game("junk/g.txt");
     auto strat = SSG::random_strategy(g.n);
     
-    auto s1 = g.hoffman_karp(strat);
-    auto s2 = g.hoffman_karp_LP(strat);
+    auto s1 = g.hoffman_karp_min_LP(strat);
+    auto s2 = g.hoffman_karp_max_LP(strat);
+    auto s3 = g.converge_from_below();
+    auto s4 = SSG::random_strategy(g.n);
+    auto p = g.optimize_max_LP(s4);
+
+    g.reconstruct_strategy_min(s4,p);
 
     cout << g.probabilities(s1) << endl;
     cout << g.probabilities(s2) << endl;
+    cout << g.probabilities(s3) << endl;
+    cout << g.probabilities(s3) << endl;
+
+
+
+/*
+    for(int v = 6; v<1000; v++){
+        SSG game = SSG::random_nontrivial_game(v);
+        std::vector<std::vector<bool>> ss(0);
+        ss.push_back(game.hoffman_karp());
+        ss.push_back(game.hoffman_karp_LP());
+        ss.push_back(game.tripathi_hoffman_karp());
+        ss.push_back(game.tripathi_hoffman_karp_LP());
+        ss.push_back(game.ludwig_iterative());
+        ss.push_back(game.ludwig_iterative_LP());
+        ss.push_back(game.ludwig_iterative_OG());
+
+        for(auto s: ss){
+            std::cout << game.probabilities(s) << std::endl;
+        }
+        std::cout << std::endl;
+   }
+   */
+
+  std::vector<std::vector<bool>(SSG::*)(void)> SSG_algorithms = { 
+                                                                    &SSG::hoffman_karp,
+                                                                    &SSG::hoffman_karp_max,
+                                                                    &SSG::hoffman_karp_min,
+                                                                    &SSG::hoffman_karp_min_LP,
+                                                                    &SSG::hoffman_karp_LP,
+                                                                    &SSG::hoffman_karp_max_LP, //incorrect
+                                                                    &SSG::converge_from_below,  //incorrect
+                                                                    &SSG::tripathi_hoffman_karp,
+                                                                    &SSG::tripathi_hoffman_karp_LP,
+                                                                    &SSG::ludwig_iterative,
+                                                                    &SSG::ludwig_iterative_LP
+                                                                };
+
+  for(int i = 0; i<5; i++){
+    SSG g = SSG::random_nontrivial_game(15);
+    vector<vector<bool>> strats(0);
+
+    for(auto alg: SSG_algorithms){
+        strats.push_back((g.*alg)());
+    }
+
+    for(auto s: strats){
+        cout << g.probabilities(s) << endl;
+    } 
+    g.print_vertex_types();
+    cout << endl;
+
+  }
 
     for(int v = 6; v<1000; v++){
         vector<SSG> games;
-        for(int i = 0; i<10; i++){
+        for(int i = 0; i<2; i++){
             games.push_back(SSG::random_nontrivial_game(v));
         }
-
         benchmark_SSG(games);
         //benchmark_SSG(max_games.size(), v);
-   }
+    }
 
     return 0;
 
