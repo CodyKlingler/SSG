@@ -38,7 +38,7 @@ class SSG{
         int max_sink_vertex = -1;
         int token;
         std::vector<bool> strat;
-        constexpr static double default_tolerance = .0075;
+        constexpr static double default_tolerance = .01;
         double tolerance = default_tolerance;
         const int c = 2;
         double beta = 0.0010;

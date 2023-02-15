@@ -11,12 +11,9 @@
 
 #include <Eigen/Dense>
 
-#include "include/Strategy.h" //include Strategy.h before SSG.h
 #include "include/SSG.h"
 #include "include/SSG_tests.h"
 #include "include/permute.h"
-
-#include "include/lp_c++.h"
 
 using namespace std;
 
@@ -620,188 +617,42 @@ int make_game_harder_constant_type(SSG &gg){
 
 int main(int n_args, char* args[]){
     srand(time(NULL)); std::cout << std::fixed << std::setprecision(4);
-
-    SSG g = SSG::hard_game_max(10);
-    //SSG g = SSG::read_game("junk/g.txt");
-    auto strat = SSG::random_strategy(g.n);
     
-    auto s1 = g.hoffman_karp_min_LP(strat);
-    auto s2 = g.hoffman_karp_max_LP(strat);
-    auto s3 = g.converge_from_below();
-    auto s4 = SSG::random_strategy(g.n);
-    auto p = g.optimize_max_LP(s4);
+    vector<SSG> games;
+    for(int i = 0; i<1000000000; i++){
+        auto g = SSG::random_game(20);
 
-    g.reconstruct_strategy_min(s4,p);
+        auto s_cfb = g.hoffman_karp_min_LP();
+        auto s_hk = g.hoffman_karp_max();
 
-    cout << g.probabilities(s1) << endl;
-    cout << g.probabilities(s2) << endl;
-    cout << g.probabilities(s3) << endl;
-    cout << g.probabilities(s3) << endl;
+        auto p_cfb = g.probabilities(s_cfb);
+        auto p_hk = g.probabilities(s_hk);
 
-
-
-/*
-    for(int v = 6; v<1000; v++){
-        SSG game = SSG::random_nontrivial_game(v);
-        std::vector<std::vector<bool>> ss(0);
-        ss.push_back(game.hoffman_karp());
-        ss.push_back(game.hoffman_karp_LP());
-        ss.push_back(game.tripathi_hoffman_karp());
-        ss.push_back(game.tripathi_hoffman_karp_LP());
-        ss.push_back(game.ludwig_iterative());
-        ss.push_back(game.ludwig_iterative_LP());
-        ss.push_back(game.ludwig_iterative_OG());
-
-        for(auto s: ss){
-            std::cout << game.probabilities(s) << std::endl;
+        if (!SSG::probs_match(p_cfb, p_hk, .01)){
+            std::cout << p_cfb << std::endl;
+            std::cout << p_hk << std::endl;
         }
-        std::cout << std::endl;
-   }
-   */
-
-  std::vector<std::vector<bool>(SSG::*)(void)> SSG_algorithms = { 
-                                                                    &SSG::hoffman_karp,
-                                                                    &SSG::hoffman_karp_max,
-                                                                    &SSG::hoffman_karp_min,
-                                                                    &SSG::hoffman_karp_min_LP,
-                                                                    &SSG::hoffman_karp_LP,
-                                                                    &SSG::hoffman_karp_max_LP, //incorrect
-                                                                    &SSG::converge_from_below,  //incorrect
-                                                                    &SSG::tripathi_hoffman_karp,
-                                                                    &SSG::tripathi_hoffman_karp_LP,
-                                                                    &SSG::ludwig_iterative,
-                                                                    &SSG::ludwig_iterative_LP
-                                                                };
-
-  for(int i = 0; i<5; i++){
-    SSG g = SSG::random_nontrivial_game(15);
-    vector<vector<bool>> strats(0);
-
-    for(auto alg: SSG_algorithms){
-        strats.push_back((g.*alg)());
     }
+    
 
-    for(auto s: strats){
-        cout << g.probabilities(s) << endl;
-    } 
-    g.print_vertex_types();
-    cout << endl;
 
-  }
-
-    for(int v = 6; v<1000; v++){
+     // vertex count vs time
+    for(int v = 5; v<1000; v++){
         vector<SSG> games;
-        for(int i = 0; i<2; i++){
-            games.push_back(SSG::random_nontrivial_game(v));
+        for(int i = 0; i<10; i++){
+            games.push_back(SSG::random_game(v));
         }
         benchmark_SSG(games);
-        //benchmark_SSG(max_games.size(), v);
-    }
-
-    return 0;
-
-
-    if(hardest_game_switches.size() == 0){
-        get_best_txt(hardest_game_switches);
-    }   
-
-        //vertices with no switches are useless, unless when they produce switches from having a lower number (?maybe?).
-        //some are certainly useless
-        //can we remove vertices without switches and figure out where to place them such that they make the game harder to settle?
-        // make min go before max in hoffman karp.
-
-        //remove all vertices that do not switch.
-        // min verts = (n-2)/3
-        // max = min
-        // ave = (n-2) - min - max
-
-
-    //bool test_correctness(int n_games, int n_strats_per_game, int n_vertices){
-    
-    int v = 10;
-
-    /*
-    vector<SSG> hardest_games;
-    for(int n = 0; n<100; n++){
-        vector<SSG> hard_games;
-        int iters = 0;
-        cout << n << endl;
-        for(int i = 0; i<3; i++){
-            SSG g = SSG::random_game(v);
-            int this_iters = make_game_harder(g);
-            if(iters < this_iters){
-                iters = this_iters;
-                hard_games.push_back(g);
-            }
-        }
-        hardest_games.push_back(hard_games.back());
-    }
-    */
-  /* for(int v = 6; v<100; v++){
-        vector<SSG> max_games;
-        for(int i = 0; i<10; i++){
-            max_games.push_back(SSG::hard_game_max(v));
-        }
-
-        benchmark_SSG(max_games);
-        //benchmark_SSG(max_games.size(), v);
-   }*/
-
-    for(int i = 6; i<25; i++){
-        if(!test_correctness(100,1,i)){
-            cout << "i" << endl;
-        }
-    }
-
-    return 0;
-
-    
-    for(int i = 5; i<18; i++){
-        SSG g = SSG::read_game("dermans_nontrivial/g"+to_string(i)+".txt");
-        cout <<= g;
-        cout << endl;
-        
-        cout << g.hoffman_karp_n_iterations_inverse();
-        cout << endl << endl;
-
-
-        //g.hoffman_karp_n_iterations_print();
-    }
-
-    return 0;
-
-    const int n_games = 100;
-
-    while(true){
-        for(int v = 5; v<12; v++){
-            cout << v << endl;
-            int max = 0;
-            for(int n_g = 0; n_g<n_games; n_g++){
-
-                int max_game = 0;
-                vector<SSG> x;
-                for(int i = 0; i<100; i++){
-                    SSG g = SSG::random_nontrivial_game(v);
-                    int iters = g.hoffman_karp_n_iterations_inverse();
-                    if(iters > max_game){
-                        max_game = iters;
-                        x.push_back(g);
-                    }
-                }
-                
-                int init = x.back().hoffman_karp_n_iterations_dermans();
-                
-                init = make_game_harder_static_type_nontrivial(x.back());
-                cout << "v: " << v << "  i: " << init << endl;
-
-                /*if(init > hardest_game_switches[v]){
-                    hardest_game_switches[v] = init;
-                    set_best_txt(hardest_game_switches);
-                    write_hard_game(g);
-                }*/
-            }
-            cout << endl;
-        }
     }
     return 0;
+
+    // distribution of time
+    vector<SSG> games2;
+    for(int n_g = 0; n_g < 1000; n_g++){
+        int v = 60;
+        games2.push_back(SSG::random_game(v));
+    }
+    benchmark_SSG_distribution2(games2, .5, 30, .5);
+    return 0;
+
 }

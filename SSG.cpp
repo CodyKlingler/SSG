@@ -691,52 +691,48 @@ std::vector<bool> SSG::hoffman_karp2(){
     return hoffman_karp2(s);
 }
 
+//assumes that the input is a stable for min
 bool SSG::reconstruct_strategy_min(std::vector<bool> &strategy, std::vector<double> p){
     bool ret = false;
-    for(int i = 0; i<n; i++){
-        if(type[i] == vertex_type::min){
+    for(int i: min_vertices){
             int j = outgoing_edge[i][0];
             int k = outgoing_edge[i][1];
             bool old_strat = strategy[i];
-            strategy[i] = p[j] > p[k]; // selects smaller probability.
+
+            strategy[i] = p[j] > p[k]; // selects smaller one
+            
             if(strategy[i] != old_strat && p[j]!=p[k]){
                 ret = true;
             }
-        }
+        
     }
     return ret;
 }
 
+// assumes that the input is a stable for max
 bool SSG::reconstruct_strategy_max(std::vector<bool> &strategy, std::vector<double> p){
      bool ret = false;
-    for(int i = 0; i<n; i++){
-        if(type[i] == vertex_type::max){
+    for(int i: max_vertices){
             int j = outgoing_edge[i][0];
             int k = outgoing_edge[i][1];
             bool old_strat = strategy[i];
-            strategy[i] = p[j] < p[k]; // selects bigger probability.
+
+            strategy[i] = p[j] < p[k]; // selects bigger one.
+
             if(strategy[i] != old_strat && p[j]!=p[k]){
                 ret = true;
             }
-        }
     }
     return ret;
 }
 
+// assumes that the input is stable
 bool SSG::reconstruct_strategy(std::vector<bool> &strategy, std::vector<double> p){
-     bool ret = false;
-    for(int i = 0; i<n; i++){
-        if(type[i] == vertex_type::max || type[i] == vertex_type::min){
-            int j = outgoing_edge[i][0];
-            int k = outgoing_edge[i][1];
-            bool old_strat = strategy[i];
-            strategy[i] = p[j] < p[k]; // selects bigger probability. (assuming `i` is a max vertex)
-            strategy[i] = type[i] == vertex_type::max ? strategy[i] : !strategy[i]; // flips strategy if is min vertex instead
-            if(strategy[i] != old_strat && p[j]!=p[k]){
-                ret = true;
-            }
-        }
-    }
+    bool ret = false;
+
+    ret |= reconstruct_strategy_max(strategy, p);
+    ret |= reconstruct_strategy_min(strategy, p);
+    
     return ret;
 }
 
@@ -747,7 +743,14 @@ bool SSG::switch_max(std::vector<bool> &strategy, std::vector<double> p){
         int j = outgoing_edge[i][0];
         int k = outgoing_edge[i][1];
         bool old_strat = strategy[i];
+
+        // is within tolerance, no need to switch.
+        if( abs(p[i] - p[outgoing_edge[i][old_strat]]) <= tolerance){
+            continue;
+        }
+
         strategy[i] = p[j] < p[k]; // selects bigger probability.
+
         if(strategy[i] != old_strat && p[j]!=p[k]){
             any_switched = true;
         }
@@ -772,21 +775,25 @@ bool SSG::switch_min(std::vector<bool> &strategy, std::vector<double> p){
 bool SSG::switch_max_tripathi(std::vector<bool> &strategy, std::vector<double> p){
     bool any_switched = false;
     bool any_switchable = false;
-    do{
-        for(int i: max_vertices){
-            int j = outgoing_edge[i][0];
-            int k = outgoing_edge[i][1];
-            bool old_strat = strategy[i];
-            bool optimal_strat = p[j] < p[k]; // selects bigger probability.                    
-            if(optimal_strat != old_strat && p[j]!=p[k]){
-                any_switchable = true;
-                if(random()%2){
-                    strategy[i] = optimal_strat;
-                    any_switched = true;
-                }
+
+    std::vector<int> shuffled_max; // shuffle the max vertices
+
+    std::shuffle(std::begin(shuffled_max), std::end(shuffled_max), rng);
+    for(int i: shuffled_max){
+        int j = outgoing_edge[i][0];
+        int k = outgoing_edge[i][1];
+        bool old_strat = strategy[i];
+        bool optimal_strat = p[j] < p[k]; // selects bigger probability.                    
+        if(optimal_strat != old_strat && p[j]!=p[k]){
+            if(!any_switched){ // first switchable vertex encountered is switched (at least one must be)
+                any_switched = true;
+                strategy[i] = optimal_strat;
+            }
+            else if(random()%2){ // the rest are decided 50-50
+                strategy[i] = optimal_strat;
             }
         }
-    }while(any_switchable && !any_switched);
+    }
     return any_switched;
 }
 
@@ -1229,7 +1236,10 @@ std::vector<bool> SSG::hoffman_karp_min_LP(){
 }
 std::vector<bool> SSG::hoffman_karp_min_LP(std::vector<bool> s){
     bool strategys_updated;
+
+    int iterations = 0;
     do{
+        iterations++;
         strategys_updated = false;
         auto probs = optimize_min_LP(s);
         strategys_updated |= reconstruct_strategy_min(s, probs);
@@ -1810,7 +1820,9 @@ std::vector<bool> SSG::ludwig_iterative_LP(std::vector<bool> s){
     std::shuffle(std::begin(s_removed), std::end(s_removed), rng);
 
     auto p = optimize_min_LP(s);
-    reconstruct_strategy(s, p);
+    //std::cout << s << std::endl;
+    reconstruct_strategy_min(s, p);
+    //std::cout << s << std::endl;
 
     while(s_removed.size()){
 
@@ -1830,7 +1842,14 @@ std::vector<bool> SSG::ludwig_iterative_LP(std::vector<bool> s){
             if(delta > tolerance && new_p[j] > p[j]){
                 s[cur_s] = !s[cur_s];
                 p = optimize_min_LP(s);
-                reconstruct_strategy(s, p);
+
+                //print_graph();
+                //print_vertex_types();
+                //std::cout << p << std::endl;
+                //std::cout << s << std::endl;
+                reconstruct_strategy_min(s, p);
+                p = probabilities(s);
+                //std::cout << s << std::endl;
 
                 std::shuffle(std::begin(s_in_game), std::end(s_in_game),rng);
 
@@ -1839,6 +1858,7 @@ std::vector<bool> SSG::ludwig_iterative_LP(std::vector<bool> s){
                     s_in_game.pop_back();
                     s_removed.push_back(v);
                 }
+                
                 break;
             }
         }

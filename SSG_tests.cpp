@@ -9,18 +9,18 @@
 
 //#define SSG_TEST_PRINT
 
-std::vector<std::vector<bool>(SSG::*)(void)> SSG_algorithms = { //&SSG::hoffman_karp,
-                                                                //&SSG::hoffman_karp_max,
-                                                                //&SSG::hoffman_karp_min,
-                                                                //&SSG::hoffman_karp_LP,
-                                                                //&SSG::hoffman_karp_min_LP,
-                                                                //&SSG::hoffman_karp_max_LP,
-                                                                //&SSG::tripathi_hoffman_karp,
-                                                                //&SSG::tripathi_hoffman_karp_LP,
-                                                                //&SSG::ludwig_iterative,
-                                                                //&SSG::ludwig_iterative_LP,
-                                                                &SSG::quadratic_program,
-                                                                //&SSG::converge_from_below
+std::vector<std::vector<bool>(SSG::*)(void)> SSG_algorithms = {     //&SSG::hoffman_karp,
+                                                                    &SSG::hoffman_karp_max, // good
+                                                                    //&SSG::hoffman_karp_min, // odd
+                                                                    &SSG::hoffman_karp_min_LP, // good
+                                                                    //&SSG::hoffman_karp_LP, 
+                                                                    //&SSG::hoffman_karp_max_LP, //incorrect // odd
+                                                                    &SSG::converge_from_below,  //incorrect
+                                                                    &SSG::tripathi_hoffman_karp,
+                                                                    &SSG::tripathi_hoffman_karp_LP,
+                                                                    //&SSG::ludwig_iterative,
+                                                                    //&SSG::ludwig_iterative_LP,
+                                                                    //&SSG::quadratic_program,
                                                                 };
                                                                 
 std::vector<const char*> SSG_algorithm_names = {"hk","hklp", "li 1", "li 2"};
@@ -227,7 +227,7 @@ void benchmark_SSG(std::vector<SSG> games){
     std::cout << n_vertices;
 
     for(auto cur_algo: SSG_algorithms){
-        std::vector<double> times(n_games);
+        std::vector<double> times(0);
         for(SSG cur_game: games){
             auto start = std::chrono::system_clock::now();
             //for(std::vector<bool> cur_strat: random_strategies){      //TODO: remove. 
@@ -241,6 +241,78 @@ void benchmark_SSG(std::vector<SSG> games){
         std::cout << '\t' << times[times.size()/2];
     }   
     std::cout << std::endl;
+}
+
+//assumes each game passed in has the same number of verts
+void benchmark_SSG_distribution(std::vector<SSG> games){
+    int n_games = games.size();
+    int n_vertices = games[0].n;
+
+    std::cout << n_vertices << std::endl;
+
+    for(auto cur_algo: SSG_algorithms){
+        std::vector<double> times(0);
+        for(SSG cur_game: games){
+            auto start = std::chrono::system_clock::now(); // start clock
+            std::vector<bool> opt = (cur_game.*cur_algo)();               // do algo 
+            auto end = std::chrono::system_clock::now(); //end clock
+            std::chrono::duration<double> elapsed_seconds = end - start;
+            times.push_back(elapsed_seconds.count()*1000);
+        }
+        std::sort(times.begin(), times.end());
+        std::cout << times << std::endl;
+    }   
+}
+
+//assumes each game passed in has the same number of verts
+void benchmark_SSG_distribution2(std::vector<SSG> games, double min, double max, double increment){
+    int n_games = games.size();
+    int n_vertices = games[0].n;
+
+    std::cout << n_vertices << std::endl;
+
+    std::cout << "<" << min << " ";
+    for(double i = min; i< max; i+= increment){
+        std::cout << i << " ";
+    }
+    std::cout << ">" << max << std::endl;
+
+
+    for(auto cur_algo: SSG_algorithms){
+        std::vector<double> times(0);
+        for(SSG cur_game: games){
+            auto start = std::chrono::system_clock::now(); // start clock
+            std::vector<bool> opt = (cur_game.*cur_algo)();               // do algo 
+            auto end = std::chrono::system_clock::now(); //end clock
+            std::chrono::duration<double> elapsed_seconds = end - start;
+            times.push_back(elapsed_seconds.count()*1000);
+        }
+        std::sort(times.begin(), times.end());
+        
+        int c = 0;
+        for(int i = 0; i<times.size(); i++){
+            if(times[i] < min)
+                c++;
+        }
+        std::cout << c << " ";
+
+        for(double v = min; v < max; v+= increment){
+            int c = 0;
+            for(int i = 0; i<times.size(); i++){
+                if(times[i] > v && times[i] < v+increment)
+                    c++;
+            }
+
+            std::cout << c << " ";
+        }
+
+        c = 0;
+        for(int i = 0; i<times.size(); i++){
+            if(times[i] > max)
+                c++;
+        }
+        std::cout << c << " " << std::endl;
+    }   
 }
 
 
